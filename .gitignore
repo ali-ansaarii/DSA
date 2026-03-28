@@ -1,0 +1,55 @@
+# OS/editor noise
+.DS_Store
+.vscode/
+.idea/
+
+# Generic build artifacts
+build/
+dist/
+out/
+bin/
+obj/
+*.o
+*.obj
+*.so
+*.a
+*.dylib
+*.dll
+*.exe
+
+# C/C++
+*.dSYM/
+*.gcda
+*.gcno
+*.profraw
+*.profdata
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+.gradle/
+
+# Rust
+target/
+# Keep Cargo.lock for binaries; ignore for libraries. Uncomment if needed:
+# Cargo.lock
+
+# Temporary files
+*.tmp
+*.temp
+*.log
