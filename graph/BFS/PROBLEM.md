@@ -79,6 +79,7 @@ This topic also includes `input_challenge.txt`, a star graph with `300,000` node
 
 This input is intentionally designed to stress BFS queue growth.
 From the start node `0`, BFS discovers almost the entire graph in one step, creating a very wide frontier.
+It is meant to highlight BFS memory pressure rather than recursion depth or stack behavior.
 
 Run it with:
 
