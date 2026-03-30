@@ -21,6 +21,8 @@ Nodes are numbered from `0` to `n-1`.
 - Next `m` lines: `u v` (undirected edge between `u` and `v`)
 - Last line: `start`
 
+The graph is treated as undirected in every implementation in this folder.
+
 ## Test Case
 This is the test case currently used in `input.txt`:
 
