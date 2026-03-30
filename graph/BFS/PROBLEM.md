@@ -39,6 +39,7 @@ This is the test case currently used in `input.txt`:
 
 ## Intended Output
 Adjacency lists are sorted before traversal, so the BFS order is deterministic.
+Nodes are visited in increasing distance from the start node, with sorted neighbors breaking ties within the same level.
 
 Expected output:
 
