@@ -1,0 +1,11 @@
+[package]
+name = "bfs"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/BFS.rs"
+
+[[bin]]
+name = "bfs"
+path = "src/main.rs"
