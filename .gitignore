@@ -53,3 +53,7 @@ target/
 *.tmp
 *.temp
 *.log
+
+# Topic-local benchmark/build logs
+logs/
+**/logs/
