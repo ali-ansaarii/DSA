@@ -1,6 +1,7 @@
 #include "DFS.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -9,7 +10,18 @@
 using namespace std;
 
 int main(int argc, char* argv[]) {
-    const string inputPath = (argc > 1) ? argv[1] : "input.txt";
+    string inputPath = "../inputs/input.txt";
+    bool timeDfs = false;
+
+    for (int i = 1; i < argc; ++i) {
+        const string arg = argv[i];
+        if (arg == "--time-dfs") {
+            timeDfs = true;
+        } else {
+            inputPath = arg;
+        }
+    }
+
     ifstream input(inputPath);
 
     if (!input) {
@@ -48,13 +60,21 @@ int main(int argc, char* argv[]) {
         ranges::sort(neighbors);
     }
 
+    const auto dfsStart = chrono::steady_clock::now();
     const vector<int> traversalOrder = DFS(graph, start);
+    const auto dfsEnd = chrono::steady_clock::now();
+    const auto dfsDuration = chrono::duration_cast<chrono::microseconds>(dfsEnd - dfsStart);
 
-    cout << "DFS traversal order:";
-    for (const int node : traversalOrder) {
-        cout << ' ' << node;
+    if (timeDfs) {
+        cout << "DFS visited nodes: " << traversalOrder.size() << '\n';
+        cout << "DFS call time (ms): " << (dfsDuration.count() / 1000.0) << '\n';
+    } else {
+        cout << "DFS traversal order:";
+        for (const int node : traversalOrder) {
+            cout << ' ' << node;
+        }
+        cout << '\n';
     }
-    cout << '\n';
 
     return 0;
 }

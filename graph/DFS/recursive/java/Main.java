@@ -4,7 +4,16 @@ import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
-        String inputPath = args.length > 0 ? args[0] : "input.txt";
+        String inputPath = "../inputs/input.txt";
+        boolean timeDfs = false;
+
+        for (String arg : args) {
+            if ("--time-dfs".equals(arg)) {
+                timeDfs = true;
+            } else {
+                inputPath = arg;
+            }
+        }
 
         List<String> lines;
         try {
@@ -110,12 +119,19 @@ public class Main {
             Collections.sort(neighbors);
         }
 
+        long dfsStart = System.nanoTime();
         List<Integer> traversalOrder = DFS.DFS(graph, start);
+        double dfsDurationMs = (System.nanoTime() - dfsStart) / 1_000_000.0;
 
-        System.out.print("DFS traversal order:");
-        for (int node : traversalOrder) {
-            System.out.print(" " + node);
+        if (timeDfs) {
+            System.out.println("DFS visited nodes: " + traversalOrder.size());
+            System.out.printf(Locale.US, "DFS call time (ms): %.3f%n", dfsDurationMs);
+        } else {
+            System.out.print("DFS traversal order:");
+            for (int node : traversalOrder) {
+                System.out.print(" " + node);
+            }
+            System.out.println();
         }
-        System.out.println();
     }
 }

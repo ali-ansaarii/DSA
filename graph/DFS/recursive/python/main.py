@@ -1,13 +1,21 @@
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 
 from DFS import DFS
 
 
 def main() -> int:
-    input_path = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("input.txt")
+    input_path = Path("../inputs/input.txt")
+    time_dfs = False
+
+    for arg in sys.argv[1:]:
+        if arg == "--time-dfs":
+            time_dfs = True
+        else:
+            input_path = Path(arg)
 
     try:
         lines = [line.strip() for line in input_path.read_text(encoding="utf-8").splitlines() if line.strip()]
@@ -63,8 +71,15 @@ def main() -> int:
     for neighbors in graph:
         neighbors.sort()
 
+    dfs_start = time.perf_counter()
     traversal_order = DFS(graph, start)
-    print("DFS traversal order:", *traversal_order)
+    dfs_duration_ms = (time.perf_counter() - dfs_start) * 1000
+
+    if time_dfs:
+        print(f"DFS visited nodes: {len(traversal_order)}")
+        print(f"DFS call time (ms): {dfs_duration_ms:.3f}")
+    else:
+        print("DFS traversal order:", *traversal_order)
 
     return 0
 

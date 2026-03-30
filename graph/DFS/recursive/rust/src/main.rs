@@ -6,7 +6,16 @@ use std::process;
 use dfs::DFS;
 
 fn main() {
-    let input_path = env::args().nth(1).unwrap_or_else(|| "input.txt".to_string());
+    let mut input_path = "../inputs/input.txt".to_string();
+    let mut time_dfs = false;
+
+    for arg in env::args().skip(1) {
+        if arg == "--time-dfs" {
+            time_dfs = true;
+        } else {
+            input_path = arg;
+        }
+    }
 
     let file = match File::open(&input_path) {
         Ok(f) => f,
@@ -41,7 +50,7 @@ fn main() {
     let n = header[0];
     let m = header[1];
 
-    if n == 0 || m > 1_000_000 {
+    if n == 0 {
         eprintln!("Invalid graph header. Expected: n m");
         process::exit(1);
     }
@@ -96,11 +105,18 @@ fn main() {
         neighbors.sort_unstable();
     }
 
+    let dfs_start = std::time::Instant::now();
     let traversal_order = DFS(&graph, start);
+    let dfs_duration_ms = dfs_start.elapsed().as_secs_f64() * 1000.0;
 
-    print!("DFS traversal order:");
-    for node in traversal_order {
-        print!(" {}", node);
+    if time_dfs {
+        println!("DFS visited nodes: {}", traversal_order.len());
+        println!("DFS call time (ms): {:.3}", dfs_duration_ms);
+    } else {
+        print!("DFS traversal order:");
+        for node in traversal_order {
+            print!(" {}", node);
+        }
+        println!();
     }
-    println!();
 }
