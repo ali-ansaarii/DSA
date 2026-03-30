@@ -124,3 +124,11 @@ algorithm_name/
 ## Commit Hygiene
 - Prefer small, logically separated commits when a topic evolves in stages.
 - When practical, split shared inputs, individual variant implementations, shared orchestration, and repo-wide hygiene updates into separate commits.
+
+## Default Delivery Workflow
+- If the user gives only an algorithm name or a similarly short implementation request, treat that as a request to run the full delivery flow end to end.
+- Start by creating a dedicated branch from `main` for that algorithm before making code changes.
+- Implement the topic following this repository's structure and language expectations, including inputs, `PROBLEM.md`, `Makefile`, and all required language implementations unless the user narrows the scope.
+- Follow the same build and verification discipline used in prior topics: prepare the required small/default, long/general, and challenging inputs when practical, add the expected run and benchmark targets, and run the relevant smoke tests before committing.
+- If verification succeeds, continue through the full publishing flow without waiting for an extra prompt: stage the intended files, create the appropriate commits, push the branch, and open a PR to `main`.
+- If verification fails, stop before commit/push, summarize the blocker clearly, and ask the user how to proceed.
