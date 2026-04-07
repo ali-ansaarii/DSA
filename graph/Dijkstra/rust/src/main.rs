@@ -44,18 +44,26 @@ fn main() {
         process::exit(1);
     }
 
-    let header: Vec<usize> = lines[0]
-        .split_whitespace()
-        .filter_map(|s| s.parse().ok())
-        .collect();
-
-    if header.len() != 2 {
+    let header_parts: Vec<&str> = lines[0].split_whitespace().collect();
+    if header_parts.len() != 2 {
         eprintln!("Invalid graph header. Expected: n m");
         process::exit(1);
     }
 
-    let n = header[0];
-    let m = header[1];
+    let n: usize = match header_parts[0].parse() {
+        Ok(value) => value,
+        Err(_) => {
+            eprintln!("Invalid graph header. Expected: n m");
+            process::exit(1);
+        }
+    };
+    let m: usize = match header_parts[1].parse() {
+        Ok(value) => value,
+        Err(_) => {
+            eprintln!("Invalid graph header. Expected: n m");
+            process::exit(1);
+        }
+    };
 
     if n == 0 {
         eprintln!("Invalid graph header. Expected: n m");
