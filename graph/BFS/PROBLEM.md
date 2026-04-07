@@ -15,6 +15,7 @@ Given:
 Run iterative BFS from the start node and print traversal order.
 
 Nodes are numbered from `0` to `n-1`.
+For build, run, and benchmark commands, see `USAGE.md`.
 
 ## Input Format
 - Line 1: `n m`
@@ -48,43 +49,3 @@ Expected output:
 ```text
 BFS traversal order: 0 1 2 3 4 5 6
 ```
-
-## Large Stress Input
-This topic also includes `input_large.txt` for performance testing.
-
-It contains a complete binary tree with `1,048,575` nodes and `1,048,574` undirected edges, starting from node `0`.
-This gives BFS a large but representative connected workload without being intentionally adversarial.
-
-Run it with:
-
-```text
-make run_cpp INPUT=input_large.txt
-make run_py INPUT=input_large.txt
-make run_java INPUT=input_large.txt
-make run_rs INPUT=input_large.txt
-```
-
-To time all four language implementations in this folder on the long input:
-
-```text
-make benchmark_long
-```
-
-This benchmark measures only the `BFS(...)` call inside `main`, not file parsing, graph construction, sorting, or output printing.
-The runners expose the timing mode through an optional `--time-bfs` flag.
-The benchmark wrapper also reports sampled peak RSS in kilobytes so the memory output works on both macOS and Linux.
-
-## Challenge Input
-This topic also includes `input_challenge.txt`, a star graph with `300,000` nodes and `299,999` edges.
-
-This input is intentionally designed to stress BFS queue growth.
-From the start node `0`, BFS discovers almost the entire graph in one step, creating a very wide frontier.
-It is meant to highlight BFS memory pressure rather than recursion depth or stack behavior.
-
-Run it with:
-
-```text
-make benchmark_challenge
-```
-
-This challenge benchmark also reports peak process memory through the same cross-platform wrapper.
