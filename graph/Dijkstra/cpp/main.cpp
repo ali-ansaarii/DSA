@@ -60,14 +60,20 @@ int main(int argc, char* argv[]) {
         ranges::sort(neighbors);
     }
 
+    DijkstraResult result;
     const auto dijkstraStart = chrono::steady_clock::now();
-    const vector<long long> distances = Dijkstra(graph, start);
+    try {
+        result = Dijkstra(graph, start);
+    } catch (const DijkstraOverflowError& error) {
+        cerr << error.what() << '\n';
+        return 1;
+    }
     const auto dijkstraEnd = chrono::steady_clock::now();
     const auto dijkstraDuration = chrono::duration_cast<chrono::microseconds>(dijkstraEnd - dijkstraStart);
 
     size_t reachableNodes = 0;
-    for (const long long distance : distances) {
-        if (distance < DIJKSTRA_INF / 2) {
+    for (const bool isReachable : result.reachable) {
+        if (isReachable) {
             ++reachableNodes;
         }
     }
@@ -77,11 +83,11 @@ int main(int argc, char* argv[]) {
         cout << "Dijkstra call time (ms): " << (dijkstraDuration.count() / 1000.0) << '\n';
     } else {
         cout << "Shortest distances from " << start << ':';
-        for (const long long distance : distances) {
-            if (distance >= DIJKSTRA_INF / 2) {
+        for (size_t i = 0; i < result.distances.size(); ++i) {
+            if (!result.reachable[i]) {
                 cout << " INF";
             } else {
-                cout << ' ' << distance;
+                cout << ' ' << result.distances[i];
             }
         }
         cout << '\n';

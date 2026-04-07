@@ -4,7 +4,7 @@ import sys
 import time
 from pathlib import Path
 
-from Dijkstra import Dijkstra, INF
+from Dijkstra import Dijkstra
 
 
 def main() -> int:
@@ -71,15 +71,19 @@ def main() -> int:
         neighbors.sort()
 
     dijkstra_start = time.perf_counter()
-    distances = Dijkstra(graph, start)
+    try:
+        distances, reachable = Dijkstra(graph, start)
+    except OverflowError as error:
+        print(error, file=sys.stderr)
+        return 1
     dijkstra_duration_ms = (time.perf_counter() - dijkstra_start) * 1000
-    reachable_nodes = sum(distance < INF // 2 for distance in distances)
+    reachable_nodes = sum(reachable)
 
     if time_dijkstra:
         print(f"Reachable nodes: {reachable_nodes}")
         print(f"Dijkstra call time (ms): {dijkstra_duration_ms:.3f}")
     else:
-        formatted = [str(distance) if distance < INF // 2 else "INF" for distance in distances]
+        formatted = [str(distance) if is_reachable else "INF" for distance, is_reachable in zip(distances, reachable)]
         print(f"Shortest distances from {start}:", *formatted)
 
     return 0

@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::process;
 
-use dijkstra::{Dijkstra, INF};
+use dijkstra::Dijkstra;
 
 fn main() {
     let mut input_path = "input.txt".to_string();
@@ -26,9 +26,15 @@ fn main() {
     };
 
     let reader = BufReader::new(file);
-    let lines: Vec<String> = reader
-        .lines()
-        .filter_map(Result::ok)
+    let raw_lines: Vec<String> = match reader.lines().collect() {
+        Ok(lines) => lines,
+        Err(_) => {
+            eprintln!("Failed while reading input file: {}", input_path);
+            process::exit(1);
+        }
+    };
+    let lines: Vec<String> = raw_lines
+        .into_iter()
         .map(|line| line.trim().to_string())
         .filter(|line| !line.is_empty())
         .collect();
@@ -119,17 +125,23 @@ fn main() {
     }
 
     let dijkstra_start = std::time::Instant::now();
-    let distances = Dijkstra(&graph, start);
+    let result = match Dijkstra(&graph, start) {
+        Ok(value) => value,
+        Err(message) => {
+            eprintln!("{}", message);
+            process::exit(1);
+        }
+    };
     let dijkstra_duration_ms = dijkstra_start.elapsed().as_secs_f64() * 1000.0;
-    let reachable_nodes = distances.iter().filter(|&&distance| distance < INF / 2).count();
+    let reachable_nodes = result.reachable.iter().filter(|&&is_reachable| is_reachable).count();
 
     if time_dijkstra {
         println!("Reachable nodes: {}", reachable_nodes);
         println!("Dijkstra call time (ms): {:.3}", dijkstra_duration_ms);
     } else {
         print!("Shortest distances from {}:", start);
-        for distance in distances {
-            if distance >= INF / 2 {
+        for (distance, is_reachable) in result.distances.iter().zip(result.reachable.iter()) {
+            if !is_reachable {
                 print!(" INF");
             } else {
                 print!(" {}", distance);

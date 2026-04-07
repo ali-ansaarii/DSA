@@ -121,13 +121,20 @@ public class Main {
             neighbors.sort(Comparator.comparingInt(edge -> edge.to));
         }
 
+        Dijkstra.Result result;
         long dijkstraStart = System.nanoTime();
-        long[] distances = Dijkstra.Dijkstra(graph, start);
+        try {
+            result = Dijkstra.Dijkstra(graph, start);
+        } catch (ArithmeticException e) {
+            System.err.println(e.getMessage());
+            System.exit(1);
+            return;
+        }
         double dijkstraDurationMs = (System.nanoTime() - dijkstraStart) / 1_000_000.0;
 
         int reachableNodes = 0;
-        for (long distance : distances) {
-            if (distance < Dijkstra.INF / 2) {
+        for (boolean isReachable : result.reachable) {
+            if (isReachable) {
                 reachableNodes++;
             }
         }
@@ -137,11 +144,11 @@ public class Main {
             System.out.printf(Locale.US, "Dijkstra call time (ms): %.3f%n", dijkstraDurationMs);
         } else {
             System.out.print("Shortest distances from " + start + ":");
-            for (long distance : distances) {
-                if (distance >= Dijkstra.INF / 2) {
+            for (int i = 0; i < result.distances.length; i++) {
+                if (!result.reachable[i]) {
                     System.out.print(" INF");
                 } else {
-                    System.out.print(" " + distance);
+                    System.out.print(" " + result.distances[i]);
                 }
             }
             System.out.println();
