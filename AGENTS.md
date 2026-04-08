@@ -54,7 +54,8 @@ algorithm_name/
 ## Input Rules
 - Read input from external files (for example, `input.txt`).
 - Use a consistent input format across languages for the same problem.
-- Document the problem, input format, sample test case, and intended output in one topic file: `PROBLEM.md`.
+- Document the algorithm explanation, problem statement, input format, sample test case, and intended output in `PROBLEM.md`.
+- Keep operational guidance such as available input files, run commands, and benchmark commands in a separate `USAGE.md` file so `PROBLEM.md` stays focused on understanding the algorithm.
 - If multiple variants share the same test data, store the files once in a shared parent `inputs/` folder instead of duplicating them in each variant folder.
 - Prefer providing three kinds of inputs when practical:
   - one small/default input for correctness and easy manual inspection
