@@ -6,6 +6,8 @@ from pathlib import Path
 
 from Dijkstra import Dijkstra
 
+MAX_SIGNED_DISTANCE = (1 << 63) - 1
+
 
 def main() -> int:
     input_path = Path("input.txt")
@@ -50,7 +52,7 @@ def main() -> int:
             print(f"Invalid weighted edge at line {i + 1}", file=sys.stderr)
             return 1
 
-        if u < 0 or u >= n or v < 0 or v >= n or w < 0:
+        if u < 0 or u >= n or v < 0 or v >= n or w < 0 or w > MAX_SIGNED_DISTANCE:
             print(f"Invalid weighted edge at line {i + 1}", file=sys.stderr)
             return 1
 

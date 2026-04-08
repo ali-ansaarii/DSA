@@ -5,6 +5,8 @@ use std::process;
 
 use dijkstra::Dijkstra;
 
+const MAX_SIGNED_DISTANCE: u64 = i64::MAX as u64;
+
 fn main() {
     let mut input_path = "input.txt".to_string();
     let mut time_dijkstra = false;
@@ -106,7 +108,7 @@ fn main() {
             }
         };
 
-        if u >= n || v >= n {
+        if u >= n || v >= n || w > MAX_SIGNED_DISTANCE {
             eprintln!("Invalid weighted edge at line {}", i + 2);
             process::exit(1);
         }
