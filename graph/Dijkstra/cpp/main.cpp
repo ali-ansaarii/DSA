@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
     }
 
     for (auto& neighbors : graph) {
-        ranges::sort(neighbors);
+        sort(neighbors.begin(), neighbors.end());
     }
 
     DijkstraResult result;
