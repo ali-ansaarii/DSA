@@ -8,7 +8,7 @@ use dijkstra::Dijkstra;
 const MAX_SIGNED_DISTANCE: u64 = i64::MAX as u64;
 
 fn main() {
-    let mut input_path = "input.txt".to_string();
+    let mut input_path = "inputs/input.txt".to_string();
     let mut time_dijkstra = false;
 
     for arg in env::args().skip(1) {

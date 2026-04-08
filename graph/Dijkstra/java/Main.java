@@ -4,7 +4,7 @@ import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
-        String inputPath = "input.txt";
+        String inputPath = "inputs/input.txt";
         boolean timeDijkstra = false;
 
         for (String arg : args) {

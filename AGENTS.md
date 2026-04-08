@@ -7,15 +7,16 @@ This repository collects implementations of data structures and algorithms in mu
 - Organize by topic first (example: `graph/DFS/recursive`).
 - Keep language implementations for the same problem inside the same topic folder.
 - If one algorithm has multiple variants (for example, `recursive` and `iterative`), use a parent topic folder named after the algorithm and place each variant in a child folder.
-- In a single-variant topic folder, keep shared files at the topic root (`input.txt`, `PROBLEM.md`, `Makefile`) and place code under language subfolders.
+- In a single-variant topic folder, keep shared documentation and orchestration files at the topic root (`PROBLEM.md`, `USAGE.md`, `Makefile`), store test data under an `inputs/` subfolder, and place code under language subfolders.
 - In a multi-variant topic parent, keep shared assets at the parent level (for example, `inputs/`, a parent `Makefile`) and keep variant-specific code/docs inside each child folder.
 - Preferred language subfolders: `cpp/`, `python/`, `java/`, `rust/`.
 
 ### Topic Folder Layout (Preferred)
 ```
 topic_name/
-	input.txt
+	inputs/
 	PROBLEM.md
+	USAGE.md
 	Makefile
 	cpp/
 	python/
@@ -56,6 +57,7 @@ algorithm_name/
 - Use a consistent input format across languages for the same problem.
 - Document the algorithm explanation, problem statement, input format, sample test case, and intended output in `PROBLEM.md`.
 - Keep operational guidance such as available input files, run commands, and benchmark commands in a separate `USAGE.md` file so `PROBLEM.md` stays focused on understanding the algorithm.
+- For single-variant topics too, prefer storing the actual input files under a dedicated `inputs/` folder instead of placing `input*.txt` directly at the topic root.
 - If multiple variants share the same test data, store the files once in a shared parent `inputs/` folder instead of duplicating them in each variant folder.
 - Prefer providing three kinds of inputs when practical:
   - one small/default input for correctness and easy manual inspection
