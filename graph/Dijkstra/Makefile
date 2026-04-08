@@ -20,9 +20,10 @@ LOG_DIR := $(MAKEFILE_DIR)/logs
 CPP_BUILD_LOG := $(LOG_DIR)/build_cpp.log
 JAVA_BUILD_LOG := $(LOG_DIR)/build_java.log
 RUST_BUILD_LOG := $(LOG_DIR)/build_rust.log
-INPUT ?= $(MAKEFILE_DIR)/input.txt
-LONG_INPUT ?= $(MAKEFILE_DIR)/input_large.txt
-CHALLENGE_INPUT ?= $(MAKEFILE_DIR)/input_challenge.txt
+INPUT_DIR := $(MAKEFILE_DIR)/inputs
+INPUT ?= $(INPUT_DIR)/input.txt
+LONG_INPUT ?= $(INPUT_DIR)/input_large.txt
+CHALLENGE_INPUT ?= $(INPUT_DIR)/input_challenge.txt
 
 .PHONY: build build_cpp build_java build_rs run run_cpp run_java run_py run_rs benchmark_long benchmark_long_cpp benchmark_long_py benchmark_long_java benchmark_long_rs benchmark_challenge benchmark_challenge_cpp benchmark_challenge_py benchmark_challenge_java benchmark_challenge_rs clean
 

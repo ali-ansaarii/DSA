@@ -25,7 +25,7 @@ For build, run, and benchmark commands, see `USAGE.md`.
 The graph is treated as undirected in every implementation in this folder.
 
 ## Test Case
-This is the test case currently used in `input.txt`:
+This is the test case currently used in `inputs/input.txt`:
 
 ```text
 7 8

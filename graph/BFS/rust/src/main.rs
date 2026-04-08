@@ -6,7 +6,7 @@ use std::process;
 use bfs::BFS;
 
 fn main() {
-    let mut input_path = "input.txt".to_string();
+    let mut input_path = "inputs/input.txt".to_string();
     let mut time_bfs = false;
 
     for arg in env::args().skip(1) {

@@ -10,7 +10,7 @@
 using namespace std;
 
 int main(int argc, char* argv[]) {
-    string inputPath = "input.txt";
+    string inputPath = "inputs/input.txt";
     bool timeBfs = false;
 
     for (int i = 1; i < argc; ++i) {

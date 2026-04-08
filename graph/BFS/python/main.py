@@ -8,7 +8,7 @@ from BFS import BFS
 
 
 def main() -> int:
-    input_path = Path("input.txt")
+    input_path = Path("inputs/input.txt")
     time_bfs = False
 
     for arg in sys.argv[1:]:

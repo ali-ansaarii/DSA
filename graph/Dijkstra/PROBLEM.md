@@ -27,7 +27,7 @@ Shortest-path distances are treated as signed 64-bit values in every language im
 If a valid shortest path would exceed that range, the program reports overflow and exits instead of silently wrapping or mislabeling the result.
 
 ## Test Case
-This is the test case currently used in `input.txt`:
+This is the test case currently used in `inputs/input.txt`:
 
 ```text
 6 9
