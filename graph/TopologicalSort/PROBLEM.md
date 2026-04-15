@@ -36,7 +36,8 @@ This is the test case currently used in `inputs/input.txt`:
 ```
 
 ## Intended Output
-Adjacency lists are sorted before traversal and nodes with indegree `0` are discovered in increasing node order, so the produced order is deterministic.
+The produced order is deterministic: initial nodes with indegree `0` are scanned in increasing node order, and newly ready neighbors are enqueued according to each sorted adjacency list.
+This FIFO version of Kahn's algorithm does not always choose the globally smallest available node; that variant would use a min-priority queue.
 
 Expected output:
 
