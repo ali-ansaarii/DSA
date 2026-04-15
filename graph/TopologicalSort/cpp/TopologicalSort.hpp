@@ -1,8 +1,5 @@
-#ifndef TOPOLOGICAL_SORT_HPP
-#define TOPOLOGICAL_SORT_HPP
+#pragma once
 
 #include <vector>
 
 std::vector<int> TopologicalSort(const std::vector<std::vector<int>>& graph);
-
-#endif
