@@ -1,0 +1,11 @@
+[package]
+name = "topological_sort"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/TopologicalSort.rs"
+
+[[bin]]
+name = "topological_sort"
+path = "src/main.rs"
