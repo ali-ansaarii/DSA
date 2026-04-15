@@ -108,6 +108,7 @@ algorithm_name/
 ## C++ Preferences
 - Prefer modern C++ (C++20 or newer when available).
 - Keep function-focused files clean and easy to read.
+- Use `#pragma once` for C++ headers to stay consistent with existing graph topic headers.
 - `using namespace std;` is acceptable in this repository style for simplicity.
 - Keep executable outputs in `cpp/build/` so generated binaries are easy to ignore.
 
