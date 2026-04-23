@@ -1,0 +1,11 @@
+[package]
+name = "preorder_recursive"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/PreorderTraversal.rs"
+
+[[bin]]
+name = "preorder_recursive"
+path = "src/main.rs"
