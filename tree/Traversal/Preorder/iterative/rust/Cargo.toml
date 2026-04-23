@@ -1,0 +1,11 @@
+[package]
+name = "preorder_iterative"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/PreorderTraversal.rs"
+
+[[bin]]
+name = "preorder_iterative"
+path = "src/main.rs"
