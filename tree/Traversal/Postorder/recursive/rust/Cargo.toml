@@ -1,0 +1,11 @@
+[package]
+name = "postorder_recursive"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/PostorderTraversal.rs"
+
+[[bin]]
+name = "postorder_recursive"
+path = "src/main.rs"
