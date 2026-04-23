@@ -1,0 +1,11 @@
+[package]
+name = "inorder_iterative"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/InorderTraversal.rs"
+
+[[bin]]
+name = "inorder_iterative"
+path = "src/main.rs"
