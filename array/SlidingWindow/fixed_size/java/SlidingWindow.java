@@ -1,36 +1,42 @@
+import java.math.BigInteger;
+
 public final class SlidingWindow {
     private SlidingWindow() {}
 
-    private static boolean addOverflow(long a, long b) {
-        return (b > 0 && a > Long.MAX_VALUE - b) || (b < 0 && a < Long.MIN_VALUE - b);
-    }
+    private static final BigInteger MIN_I64 = BigInteger.valueOf(Long.MIN_VALUE);
+    private static final BigInteger MAX_I64 = BigInteger.valueOf(Long.MAX_VALUE);
 
-    private static boolean subOverflow(long a, long b) {
-        return (b < 0 && a > Long.MAX_VALUE + b) || (b > 0 && a < Long.MIN_VALUE + b);
+    private static Long toLongExact(BigInteger value) {
+        if (value.compareTo(MIN_I64) < 0 || value.compareTo(MAX_I64) > 0) {
+            return null;
+        }
+        return value.longValue();
     }
 
     public static Result bestFixedWindow(long[] values, int k) {
-        long windowSum = 0;
+        BigInteger windowSumWide = BigInteger.ZERO;
         for (int index = 0; index < k; index++) {
-            if (addOverflow(windowSum, values[index])) {
-                return null;
-            }
-            windowSum += values[index];
+            windowSumWide = windowSumWide.add(BigInteger.valueOf(values[index]));
         }
 
-        long bestSum = windowSum;
+        Long initialWindow = toLongExact(windowSumWide);
+        if (initialWindow == null) {
+            return null;
+        }
+
+        long bestSum = initialWindow;
         int bestLeft = 0;
         int bestRight = k - 1;
 
         for (int right = k; right < values.length; right++) {
-            if (subOverflow(windowSum, values[right - k])) {
+            windowSumWide = windowSumWide
+                    .subtract(BigInteger.valueOf(values[right - k]))
+                    .add(BigInteger.valueOf(values[right]));
+
+            Long windowSum = toLongExact(windowSumWide);
+            if (windowSum == null) {
                 return null;
             }
-            windowSum -= values[right - k];
-            if (addOverflow(windowSum, values[right])) {
-                return null;
-            }
-            windowSum += values[right];
 
             int left = right - k + 1;
             if (windowSum > bestSum) {

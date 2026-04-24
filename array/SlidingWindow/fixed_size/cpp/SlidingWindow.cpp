@@ -3,42 +3,36 @@
 using namespace std;
 
 namespace {
-bool CheckedAdd(long long a, long long b, long long& result) {
-    if ((b > 0 && a > 9223372036854775807LL - b) ||
-        (b < 0 && a < (-9223372036854775807LL - 1LL) - b)) {
-        return false;
-    }
-    result = a + b;
-    return true;
-}
+constexpr __int128 kMinI64 = static_cast<__int128>(-9223372036854775807LL - 1LL);
+constexpr __int128 kMaxI64 = static_cast<__int128>(9223372036854775807LL);
 
-bool CheckedSub(long long a, long long b, long long& result) {
-    if ((b < 0 && a > 9223372036854775807LL + b) ||
-        (b > 0 && a < (-9223372036854775807LL - 1LL) + b)) {
+bool TryConvertToI64(__int128 value, long long& result) {
+    if (value < kMinI64 || value > kMaxI64) {
         return false;
     }
-    result = a - b;
+    result = static_cast<long long>(value);
     return true;
 }
 }  // namespace
 
 bool BestFixedWindow(const vector<long long>& values, int k, long long& bestSum, int& bestLeft, int& bestRight) {
-    long long windowSum = 0;
+    __int128 windowSumWide = 0;
     for (int i = 0; i < k; ++i) {
-        if (!CheckedAdd(windowSum, values[i], windowSum)) {
-            return false;
-        }
+        windowSumWide += static_cast<__int128>(values[i]);
+    }
+    if (!TryConvertToI64(windowSumWide, bestSum)) {
+        return false;
     }
 
-    bestSum = windowSum;
     bestLeft = 0;
     bestRight = k - 1;
 
     for (int right = k; right < static_cast<int>(values.size()); ++right) {
-        if (!CheckedSub(windowSum, values[right - k], windowSum)) {
-            return false;
-        }
-        if (!CheckedAdd(windowSum, values[right], windowSum)) {
+        windowSumWide = windowSumWide - static_cast<__int128>(values[right - k]) +
+                        static_cast<__int128>(values[right]);
+
+        long long windowSum = 0;
+        if (!TryConvertToI64(windowSumWide, windowSum)) {
             return false;
         }
         const int left = right - k + 1;

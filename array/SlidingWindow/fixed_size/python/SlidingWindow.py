@@ -9,21 +9,16 @@ def _checked_i64(value: int) -> int | None:
 
 
 def best_fixed_window(values: list[int], k: int) -> tuple[int, int, int] | None:
-    window_sum = 0
-    for value in values[:k]:
-        window_sum += value
-        if _checked_i64(window_sum) is None:
-            return None
+    window_sum = sum(values[:k])
+    if _checked_i64(window_sum) is None:
+        return None
 
     best_sum = window_sum
     best_left = 0
     best_right = k - 1
 
     for right in range(k, len(values)):
-        window_sum -= values[right - k]
-        if _checked_i64(window_sum) is None:
-            return None
-        window_sum += values[right]
+        window_sum = window_sum - values[right - k] + values[right]
         if _checked_i64(window_sum) is None:
             return None
         left = right - k + 1
