@@ -1,0 +1,9 @@
+6 8
+find 0
+connected 0 1
+union 0 1
+union 1 2
+connected 0 2
+find 2
+union 3 4
+connected 2 4
