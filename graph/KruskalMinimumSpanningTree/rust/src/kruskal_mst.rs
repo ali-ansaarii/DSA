@@ -68,6 +68,14 @@ fn normalize(edge: Edge) -> Edge {
 }
 
 pub fn kruskal_mst(node_count: usize, edges: &[Edge]) -> Result {
+    if node_count <= 1 {
+        return Result {
+            status: Status::Ok,
+            total_weight: 0,
+            chosen_edges: Vec::new(),
+        };
+    }
+
     let mut sorted_edges = edges.iter().copied().map(normalize).collect::<Vec<Edge>>();
     sorted_edges.sort_by_key(|edge| (edge.weight, edge.source, edge.target));
 

@@ -62,6 +62,9 @@ def _normalize(edge: Edge) -> Edge:
 
 
 def kruskal_mst(node_count: int, edges: list[Edge]) -> KruskalResult:
+    if node_count <= 1:
+        return KruskalResult(KruskalStatus.OK, 0, [])
+
     sorted_edges = sorted((_normalize(edge) for edge in edges), key=lambda edge: (edge.weight, edge.source, edge.target))
     dsu = DisjointSetUnion(node_count)
     chosen_edges: list[Edge] = []

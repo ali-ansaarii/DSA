@@ -68,6 +68,10 @@ bool EdgeLess(const Edge& left, const Edge& right) {
 }  // namespace
 
 KruskalResult KruskalMST(int nodeCount, const std::vector<Edge>& edges) {
+    if (nodeCount <= 1) {
+        return {KruskalStatus::Ok, 0, {}};
+    }
+
     std::vector<Edge> sortedEdges;
     sortedEdges.reserve(edges.size());
     for (const Edge& edge : edges) {

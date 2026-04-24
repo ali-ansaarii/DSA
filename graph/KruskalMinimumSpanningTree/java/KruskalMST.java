@@ -91,6 +91,10 @@ public final class KruskalMST {
     }
 
     public static Result kruskalMST(int nodeCount, List<Edge> edges) {
+        if (nodeCount <= 1) {
+            return new Result(Status.OK, 0L, new ArrayList<>());
+        }
+
         List<Edge> sortedEdges = new ArrayList<>(edges.size());
         for (Edge edge : edges) {
             sortedEdges.add(normalize(edge));

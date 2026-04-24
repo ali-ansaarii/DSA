@@ -3,6 +3,7 @@
 ## Inputs
 This topic includes three input files:
 - `inputs/input.txt`: the small default graph used for the basic correctness run
+- `inputs/input_single_node.txt`: a one-node graph used to verify the MST base case
 - `inputs/input_large.txt`: a larger sparse undirected graph for representative benchmarking
 - `inputs/input_challenge.txt`: a graph with many cheap intra-block edges and slightly heavier connector edges
 
