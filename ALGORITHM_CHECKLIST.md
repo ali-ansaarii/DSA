@@ -31,7 +31,7 @@ The goal is to collect reusable fundamentals, not LeetCode- or Codeforces-specif
 - [x] Depth-First Search, iterative
 - [x] Breadth-First Search
 - [x] Dijkstra
-- [ ] Topological Sort
+- [x] Topological Sort
 - [ ] Disjoint Set Union
 - [ ] Bellman-Ford
 - [ ] Floyd-Warshall
@@ -72,8 +72,10 @@ The goal is to collect reusable fundamentals, not LeetCode- or Codeforces-specif
 - [ ] Median Maintenance with Two Heaps
 
 ## Tree Algorithms and Data Structures
-- [ ] Binary Tree Traversals, recursive
-- [ ] Binary Tree Traversals, iterative
+- [x] Binary Tree Traversals, recursive
+- [x] Binary Tree Traversals, iterative
+- [ ] Rooted Tree Traversals, preorder
+- [ ] Rooted Tree Traversals, postorder
 - [ ] Binary Tree Level Order Traversal
 - [ ] Binary Search Tree Search and Insert
 - [ ] Validate Binary Search Tree
