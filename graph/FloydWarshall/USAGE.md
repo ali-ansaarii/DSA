@@ -42,5 +42,6 @@ Benchmark the DAG challenge input:
 make benchmark_challenge
 ```
 
-Both benchmarks measure only the `FloydWarshall(...)` call inside `main`, not file parsing, matrix setup, or output printing.
+Both benchmarks measure only the `FloydWarshall(...)` call inside `main`, not file parsing or output printing.
+That timing does include any distance-matrix allocation and initialization performed inside `FloydWarshall(...)` before the triple-loop updates begin.
 The runners expose timing through `--time-floyd-warshall`, and the shared benchmark wrapper also reports sampled peak RSS so the memory output works on both macOS and Linux.
