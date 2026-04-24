@@ -1,0 +1,11 @@
+[package]
+name = "disjoint_set_union"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/DisjointSetUnion.rs"
+
+[[bin]]
+name = "disjoint_set_union"
+path = "src/main.rs"
