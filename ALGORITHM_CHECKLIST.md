@@ -11,7 +11,7 @@ The goal is to collect reusable fundamentals, not LeetCode- or Codeforces-specif
 
 ## Recommended Next Sequence
 - [ ] Disjoint Set Union
-- [ ] Bellman-Ford
+- [x] Bellman-Ford
 - [ ] Floyd-Warshall
 - [ ] Kruskal Minimum Spanning Tree
 - [ ] Prim Minimum Spanning Tree
@@ -33,7 +33,7 @@ The goal is to collect reusable fundamentals, not LeetCode- or Codeforces-specif
 - [x] Dijkstra
 - [x] Topological Sort
 - [ ] Disjoint Set Union
-- [ ] Bellman-Ford
+- [x] Bellman-Ford
 - [ ] Floyd-Warshall
 - [ ] Kruskal Minimum Spanning Tree
 - [ ] Prim Minimum Spanning Tree
