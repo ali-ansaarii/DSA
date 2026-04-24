@@ -17,7 +17,7 @@ The goal is to collect reusable fundamentals, not LeetCode- or Codeforces-specif
 - [x] Prim Minimum Spanning Tree
 - [x] Binary Search
 - [x] Prefix Sum
-- [ ] Difference Array
+- [x] Difference Array
 - [ ] Sliding Window
 - [ ] Monotonic Stack
 - [ ] Monotonic Queue
@@ -53,7 +53,7 @@ The goal is to collect reusable fundamentals, not LeetCode- or Codeforces-specif
 - [ ] Sliding Window, variable size
 - [x] Prefix Sum
 - [ ] Suffix Sum
-- [ ] Difference Array
+- [x] Difference Array
 - [ ] Interval Merge
 - [ ] Sweep Line
 - [ ] Boyer-Moore Majority Vote
