@@ -15,6 +15,7 @@ JAVA_DIR := $(MAKEFILE_DIR)/java
 BUILD_DIR := $(CPP_DIR)/build
 TARGET := prefix_sum
 CPP_SRC := $(CPP_DIR)/PrefixSum.cpp $(CPP_DIR)/main.cpp
+CPP_HDR := $(CPP_DIR)/PrefixSum.hpp
 BENCH_WRAPPER ?= $(REPO_ROOT)/scripts/benchmark_with_memory.sh
 LOG_DIR := $(MAKEFILE_DIR)/logs
 CPP_BUILD_LOG := $(LOG_DIR)/build_cpp.log
@@ -31,9 +32,9 @@ build: build_cpp
 
 build_cpp: $(BUILD_DIR)/$(TARGET)
 
-$(BUILD_DIR)/$(TARGET): $(CPP_SRC)
+$(BUILD_DIR)/$(TARGET): $(CPP_SRC) $(CPP_HDR)
 	@mkdir -p $(BUILD_DIR) $(LOG_DIR)
-	@$(CXX) $(CXXFLAGS) $^ -o $@ >$(CPP_BUILD_LOG) 2>&1 || { \
+	@$(CXX) $(CXXFLAGS) $(CPP_SRC) -o $@ >$(CPP_BUILD_LOG) 2>&1 || { \
 		printf 'C++ build failed. See %s\n' "$(CPP_BUILD_LOG)"; \
 		exit 1; \
 	}
@@ -68,9 +69,9 @@ build_rs:
 run_rs: build_rs
 	$(RUST_DIR)/target/release/prefix_sum $(INPUT)
 
-benchmark_long: build_cpp build_java build_rs benchmark_long_cpp benchmark_long_py benchmark_long_java benchmark_long_rs
+benchmark_long: benchmark_long_cpp benchmark_long_py benchmark_long_java benchmark_long_rs
 
-benchmark_long_cpp:
+benchmark_long_cpp: build_cpp
 	@printf '\n[PrefixSum][C++] %s\n' "$(LONG_INPUT)"
 	@$(BENCH_WRAPPER) $(BUILD_DIR)/$(TARGET) $(LONG_INPUT) --time-prefix-sum
 
@@ -78,17 +79,17 @@ benchmark_long_py:
 	@printf '\n[PrefixSum][Python] %s\n' "$(LONG_INPUT)"
 	@$(BENCH_WRAPPER) $(PYTHON) $(PY_DIR)/main.py $(LONG_INPUT) --time-prefix-sum
 
-benchmark_long_java:
+benchmark_long_java: build_java
 	@printf '\n[PrefixSum][Java] %s\n' "$(LONG_INPUT)"
 	@$(BENCH_WRAPPER) $(JAVA) -cp $(JAVA_DIR)/build Main $(LONG_INPUT) --time-prefix-sum
 
-benchmark_long_rs:
+benchmark_long_rs: build_rs
 	@printf '\n[PrefixSum][Rust] %s\n' "$(LONG_INPUT)"
 	@$(BENCH_WRAPPER) $(RUST_DIR)/target/release/prefix_sum $(LONG_INPUT) --time-prefix-sum
 
-benchmark_challenge: build_cpp build_java build_rs benchmark_challenge_cpp benchmark_challenge_py benchmark_challenge_java benchmark_challenge_rs
+benchmark_challenge: benchmark_challenge_cpp benchmark_challenge_py benchmark_challenge_java benchmark_challenge_rs
 
-benchmark_challenge_cpp:
+benchmark_challenge_cpp: build_cpp
 	@printf '\n[PrefixSum][C++][challenge] %s\n' "$(CHALLENGE_INPUT)"
 	@$(BENCH_WRAPPER) $(BUILD_DIR)/$(TARGET) $(CHALLENGE_INPUT) --time-prefix-sum
 
@@ -96,11 +97,11 @@ benchmark_challenge_py:
 	@printf '\n[PrefixSum][Python][challenge] %s\n' "$(CHALLENGE_INPUT)"
 	@$(BENCH_WRAPPER) $(PYTHON) $(PY_DIR)/main.py $(CHALLENGE_INPUT) --time-prefix-sum
 
-benchmark_challenge_java:
+benchmark_challenge_java: build_java
 	@printf '\n[PrefixSum][Java][challenge] %s\n' "$(CHALLENGE_INPUT)"
 	@$(BENCH_WRAPPER) $(JAVA) -cp $(JAVA_DIR)/build Main $(CHALLENGE_INPUT) --time-prefix-sum
 
-benchmark_challenge_rs:
+benchmark_challenge_rs: build_rs
 	@printf '\n[PrefixSum][Rust][challenge] %s\n' "$(CHALLENGE_INPUT)"
 	@$(BENCH_WRAPPER) $(RUST_DIR)/target/release/prefix_sum $(CHALLENGE_INPUT) --time-prefix-sum
 
