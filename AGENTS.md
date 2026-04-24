@@ -99,6 +99,8 @@ algorithm_name/
 - For acronym-based algorithms, keep acronym capitalization in identifiers and algorithm files (example: `DFS`).
 - Use `main` as the runner filename where language conventions allow (`main.cpp`, `main.py`, `main.rs`).
 - For Java, keep public class/file naming conventions (for example, `Main.java`, `DFS.java`).
+- Use plain descriptive branch names without a `codex/` prefix.
+- Use plain descriptive PR titles without a `[codex]` prefix.
 
 ## Rust Rules
 - For multi-file Rust implementations, prefer Cargo over raw `rustc` orchestration.
@@ -134,5 +136,8 @@ algorithm_name/
 - Start by creating a dedicated branch from `main` for that algorithm before making code changes.
 - Implement the topic following this repository's structure and language expectations, including inputs, `PROBLEM.md`, `Makefile`, and all required language implementations unless the user narrows the scope.
 - Follow the same build and verification discipline used in prior topics: prepare the required small/default, long/general, and challenging inputs when practical, add the expected run and benchmark targets, and run the relevant smoke tests before committing.
+- Before commit/push/PR creation, update the local checklist at `.local/ALGORITHM_CHECKLIST.md` to mark the newly added algorithm work. Do not recreate a tracked root `ALGORITHM_CHECKLIST.md`.
 - If verification succeeds, continue through the full publishing flow without waiting for an extra prompt: stage the intended files, create the appropriate commits, push the branch, and open a PR to `main`.
+- Use `gh pr create` for PR creation so the PR author matches the authenticated GitHub CLI account (`ali-ansaarii`) instead of any connector-linked account.
+- After creating the PR, request Codex review by commenting `@codex review` on the PR.
 - If verification fails, stop before commit/push, summarize the blocker clearly, and ask the user how to proceed.
