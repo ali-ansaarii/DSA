@@ -47,10 +47,14 @@ def read_input(input_path: str) -> tuple[list[int], list[tuple[int, int, int]]] 
     values: list[int] = []
     for token in tokens[2 : 2 + n]:
         try:
-            values.append(int(token))
+            value = int(token)
         except ValueError:
             print("Invalid array value.", file=sys.stderr)
             return None
+        if checked_i64(value) is None:
+            print("Invalid array value.", file=sys.stderr)
+            return None
+        values.append(value)
 
     updates = []
     cursor = 2 + n
@@ -65,6 +69,9 @@ def read_input(input_path: str) -> tuple[list[int], list[tuple[int, int, int]]] 
         cursor += 3
         if left < 0 or right < left or right >= n:
             print("Invalid update range.", file=sys.stderr)
+            return None
+        if checked_i64(delta) is None:
+            print("Invalid update.", file=sys.stderr)
             return None
         updates.append((left, right, delta))
 
