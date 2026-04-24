@@ -14,7 +14,7 @@ The goal is to collect reusable fundamentals, not LeetCode- or Codeforces-specif
 - [x] Bellman-Ford
 - [x] Floyd-Warshall
 - [x] Kruskal Minimum Spanning Tree
-- [ ] Prim Minimum Spanning Tree
+- [x] Prim Minimum Spanning Tree
 - [ ] Binary Search
 - [ ] Prefix Sum
 - [ ] Difference Array
@@ -36,7 +36,7 @@ The goal is to collect reusable fundamentals, not LeetCode- or Codeforces-specif
 - [x] Bellman-Ford
 - [x] Floyd-Warshall
 - [x] Kruskal Minimum Spanning Tree
-- [ ] Prim Minimum Spanning Tree
+- [x] Prim Minimum Spanning Tree
 - [ ] Strongly Connected Components, Kosaraju
 - [ ] Strongly Connected Components, Tarjan
 - [ ] Bridges
