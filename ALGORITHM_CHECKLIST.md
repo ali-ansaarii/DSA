@@ -15,7 +15,7 @@ The goal is to collect reusable fundamentals, not LeetCode- or Codeforces-specif
 - [x] Floyd-Warshall
 - [x] Kruskal Minimum Spanning Tree
 - [x] Prim Minimum Spanning Tree
-- [ ] Binary Search
+- [x] Binary Search
 - [ ] Prefix Sum
 - [ ] Difference Array
 - [ ] Sliding Window
@@ -45,7 +45,7 @@ The goal is to collect reusable fundamentals, not LeetCode- or Codeforces-specif
 - [ ] DAG Dynamic Programming
 
 ## Array and Search Patterns
-- [ ] Binary Search
+- [x] Binary Search
 - [ ] Binary Search on Answer
 - [ ] Two Pointers
 - [ ] Fast and Slow Pointers
