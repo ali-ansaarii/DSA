@@ -30,6 +30,12 @@ bool ReadInput(const string& inputPath, vector<long long>& values) {
         }
     }
 
+    string extraToken;
+    if (input >> extraToken) {
+        cerr << "Input size does not match header.\n";
+        return false;
+    }
+
     return true;
 }
 
