@@ -16,7 +16,7 @@ The goal is to collect reusable fundamentals, not LeetCode- or Codeforces-specif
 - [x] Kruskal Minimum Spanning Tree
 - [x] Prim Minimum Spanning Tree
 - [x] Binary Search
-- [ ] Prefix Sum
+- [x] Prefix Sum
 - [ ] Difference Array
 - [ ] Sliding Window
 - [ ] Monotonic Stack
@@ -51,7 +51,7 @@ The goal is to collect reusable fundamentals, not LeetCode- or Codeforces-specif
 - [ ] Fast and Slow Pointers
 - [ ] Sliding Window, fixed size
 - [ ] Sliding Window, variable size
-- [ ] Prefix Sum
+- [x] Prefix Sum
 - [ ] Suffix Sum
 - [ ] Difference Array
 - [ ] Interval Merge
