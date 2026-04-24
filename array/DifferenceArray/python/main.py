@@ -28,8 +28,13 @@ def read_input(input_path: str) -> tuple[list[int], list[tuple[int, int, int]]] 
         print("Invalid input header.", file=sys.stderr)
         return None
 
-    n = int(tokens[0])
-    q = int(tokens[1])
+    try:
+        n = int(tokens[0])
+        q = int(tokens[1])
+    except ValueError:
+        print("Invalid input header.", file=sys.stderr)
+        return None
+
     if n < 0 or q < 0:
         print("Invalid input header.", file=sys.stderr)
         return None
@@ -39,13 +44,24 @@ def read_input(input_path: str) -> tuple[list[int], list[tuple[int, int, int]]] 
         print("Input size does not match header.", file=sys.stderr)
         return None
 
-    values = [int(token) for token in tokens[2 : 2 + n]]
+    values: list[int] = []
+    for token in tokens[2 : 2 + n]:
+        try:
+            values.append(int(token))
+        except ValueError:
+            print("Invalid array value.", file=sys.stderr)
+            return None
+
     updates = []
     cursor = 2 + n
     for _ in range(q):
-        left = int(tokens[cursor])
-        right = int(tokens[cursor + 1])
-        delta = int(tokens[cursor + 2])
+        try:
+            left = int(tokens[cursor])
+            right = int(tokens[cursor + 1])
+            delta = int(tokens[cursor + 2])
+        except ValueError:
+            print("Invalid update.", file=sys.stderr)
+            return None
         cursor += 3
         if left < 0 or right < left or right >= n:
             print("Invalid update range.", file=sys.stderr)
