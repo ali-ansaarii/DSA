@@ -10,7 +10,7 @@ The goal is to collect reusable fundamentals, not LeetCode- or Codeforces-specif
 - Prefer baseline, canonical implementations before advanced optimizations or hybrid problem-specific variants.
 
 ## Recommended Next Sequence
-- [ ] Disjoint Set Union
+- [x] Disjoint Set Union
 - [ ] Bellman-Ford
 - [ ] Floyd-Warshall
 - [ ] Kruskal Minimum Spanning Tree
@@ -32,7 +32,7 @@ The goal is to collect reusable fundamentals, not LeetCode- or Codeforces-specif
 - [x] Breadth-First Search
 - [x] Dijkstra
 - [x] Topological Sort
-- [ ] Disjoint Set Union
+- [x] Disjoint Set Union
 - [ ] Bellman-Ford
 - [ ] Floyd-Warshall
 - [ ] Kruskal Minimum Spanning Tree
