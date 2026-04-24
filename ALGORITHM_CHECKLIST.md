@@ -13,7 +13,7 @@ The goal is to collect reusable fundamentals, not LeetCode- or Codeforces-specif
 - [x] Disjoint Set Union
 - [x] Bellman-Ford
 - [x] Floyd-Warshall
-- [ ] Kruskal Minimum Spanning Tree
+- [x] Kruskal Minimum Spanning Tree
 - [ ] Prim Minimum Spanning Tree
 - [ ] Binary Search
 - [ ] Prefix Sum
@@ -35,7 +35,7 @@ The goal is to collect reusable fundamentals, not LeetCode- or Codeforces-specif
 - [x] Disjoint Set Union
 - [x] Bellman-Ford
 - [x] Floyd-Warshall
-- [ ] Kruskal Minimum Spanning Tree
+- [x] Kruskal Minimum Spanning Tree
 - [ ] Prim Minimum Spanning Tree
 - [ ] Strongly Connected Components, Kosaraju
 - [ ] Strongly Connected Components, Tarjan
