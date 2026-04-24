@@ -18,7 +18,7 @@ The goal is to collect reusable fundamentals, not LeetCode- or Codeforces-specif
 - [x] Binary Search
 - [x] Prefix Sum
 - [x] Difference Array
-- [ ] Sliding Window
+- [x] Sliding Window
 - [ ] Monotonic Stack
 - [ ] Monotonic Queue
 - [ ] Fenwick Tree
@@ -49,8 +49,8 @@ The goal is to collect reusable fundamentals, not LeetCode- or Codeforces-specif
 - [ ] Binary Search on Answer
 - [ ] Two Pointers
 - [ ] Fast and Slow Pointers
-- [ ] Sliding Window, fixed size
-- [ ] Sliding Window, variable size
+- [x] Sliding Window, fixed size
+- [x] Sliding Window, variable size
 - [x] Prefix Sum
 - [ ] Suffix Sum
 - [x] Difference Array
