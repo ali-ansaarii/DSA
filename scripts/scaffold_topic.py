@@ -422,7 +422,8 @@ def sanitize_rust_module_name(binary_name: str) -> str:
 
 
 def sanitize_time_var_name(time_flag: str) -> str:
-    return sanitize_identifier(time_flag, noun="time flag", prefix="flag_")
+    sanitized = sanitize_identifier(time_flag, noun="time flag", prefix="flag_")
+    return f"time_flag_{sanitized}"
 
 
 def validate_algo_id(algo_id: str) -> str:
