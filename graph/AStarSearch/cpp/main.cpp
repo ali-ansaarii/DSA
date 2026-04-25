@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
                                                parsed.goalRow, parsed.goalCol);
             const auto end = chrono::steady_clock::now();
             const auto micros = chrono::duration_cast<chrono::microseconds>(end - start).count();
-            cerr << "Algorithm time (microseconds): " << micros << '\n';
+            cout << "Algorithm time (microseconds): " << micros << '\n';
         } else {
             distance = shortestPathLengthAStar(parsed.grid, parsed.startRow, parsed.startCol,
                                                parsed.goalRow, parsed.goalCol);

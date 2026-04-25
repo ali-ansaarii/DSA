@@ -82,7 +82,7 @@ fn run() -> Result<(), Box<dyn Error>> {
             if time_flag_time_a_star_search {
                 let started_at = Instant::now();
                 let result = shortest_path_length_a_star(&parsed.grid, start, goal);
-                eprintln!(
+                println!(
                     "Algorithm time (microseconds): {}",
                     started_at.elapsed().as_micros()
                 );

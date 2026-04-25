@@ -52,7 +52,7 @@ def main() -> int:
             started_at = time.perf_counter_ns()
             distance = shortest_path_length_a_star(grid, start_row, start_col, goal_row, goal_col)
             elapsed_microseconds = (time.perf_counter_ns() - started_at) // 1_000
-            print(f"Algorithm time (microseconds): {elapsed_microseconds}", file=sys.stderr)
+            print(f"Algorithm time (microseconds): {elapsed_microseconds}")
         else:
             distance = shortest_path_length_a_star(grid, start_row, start_col, goal_row, goal_col)
 

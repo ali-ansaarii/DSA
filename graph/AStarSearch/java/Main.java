@@ -42,7 +42,7 @@ public final class Main {
                 distance = AStarSearch.shortestPathLengthAStar(
                         parsed.grid, parsed.startRow, parsed.startCol, parsed.goalRow, parsed.goalCol);
                 long elapsedMicroseconds = (System.nanoTime() - startedAt) / 1_000L;
-                System.err.println("Algorithm time (microseconds): " + elapsedMicroseconds);
+                System.out.println("Algorithm time (microseconds): " + elapsedMicroseconds);
             } else {
                 distance = AStarSearch.shortestPathLengthAStar(
                         parsed.grid, parsed.startRow, parsed.startCol, parsed.goalRow, parsed.goalCol);
