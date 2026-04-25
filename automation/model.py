@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import json
 import os
 from pathlib import Path
+import socket
 from string import Template
 from typing import Any
 from urllib import error, request
@@ -115,12 +116,14 @@ class ResponsesModelClient:
         base_url: str = "https://api.openai.com/v1/responses",
         reasoning_effort: str = "medium",
         max_output_tokens: int = 12000,
+        request_timeout_seconds: int = 120,
     ) -> None:
         self.api_key = api_key
         self.model = model
         self.base_url = base_url
         self.reasoning_effort = reasoning_effort
         self.max_output_tokens = max_output_tokens
+        self.request_timeout_seconds = request_timeout_seconds
 
     @classmethod
     def from_environment(cls, repo_root: Path) -> "ResponsesModelClient":
@@ -134,6 +137,9 @@ class ResponsesModelClient:
             base_url=os.environ.get("OPENAI_AUTOMATION_BASE_URL", "https://api.openai.com/v1/responses"),
             reasoning_effort=os.environ.get("OPENAI_AUTOMATION_REASONING_EFFORT", "medium"),
             max_output_tokens=int(os.environ.get("OPENAI_AUTOMATION_MAX_OUTPUT_TOKENS", "12000")),
+            request_timeout_seconds=int(
+                os.environ.get("OPENAI_AUTOMATION_REQUEST_TIMEOUT_SECONDS", "120")
+            ),
         )
 
     def generate_initial_bundle(
@@ -259,11 +265,16 @@ class ResponsesModelClient:
             method="POST",
         )
         try:
-            with request.urlopen(req) as response:
+            with request.urlopen(req, timeout=self.request_timeout_seconds) as response:
                 return json.loads(response.read().decode("utf-8"))
         except error.HTTPError as exc:  # pragma: no cover - exercised only with live network
             body_text = exc.read().decode("utf-8", errors="replace")
             raise RuntimeError(f"OpenAI API request failed: {exc.code} {body_text}") from exc
+        except (error.URLError, TimeoutError, socket.timeout) as exc:
+            raise RuntimeError(
+                f"OpenAI API request failed: request timed out or could not reach the API within "
+                f"{self.request_timeout_seconds} seconds"
+            ) from exc
 
 
 def parse_file_bundle_from_response(payload: dict[str, Any]) -> FileBundle:

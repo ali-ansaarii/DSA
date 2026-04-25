@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from automation.model import collect_topic_files, parse_file_bundle_from_response
+from automation.model import (
+    ResponsesModelClient,
+    collect_topic_files,
+    load_env_defaults,
+    parse_file_bundle_from_response,
+)
 
 
 class ModelParsingTests(unittest.TestCase):
@@ -32,6 +38,29 @@ class ModelParsingTests(unittest.TestCase):
             (build_dir / "program").write_bytes(b"\xcf\x00\x01binary")
             files = collect_topic_files(topic_dir)
         self.assertEqual(files, [("PROBLEM.md", "docs")])
+
+    def test_load_env_defaults_sets_request_timeout_variable(self) -> None:
+        with TemporaryDirectory() as tmp:
+            env_path = Path(tmp) / ".env"
+            env_path.write_text(
+                "OPENAI_API_KEY=test-key\nOPENAI_AUTOMATION_REQUEST_TIMEOUT_SECONDS=45\n",
+                encoding="utf-8",
+            )
+            previous_key = os.environ.pop("OPENAI_API_KEY", None)
+            previous_timeout = os.environ.pop("OPENAI_AUTOMATION_REQUEST_TIMEOUT_SECONDS", None)
+            try:
+                load_env_defaults(env_path)
+                client = ResponsesModelClient.from_environment(Path(tmp))
+            finally:
+                if previous_key is None:
+                    os.environ.pop("OPENAI_API_KEY", None)
+                else:
+                    os.environ["OPENAI_API_KEY"] = previous_key
+                if previous_timeout is None:
+                    os.environ.pop("OPENAI_AUTOMATION_REQUEST_TIMEOUT_SECONDS", None)
+                else:
+                    os.environ["OPENAI_AUTOMATION_REQUEST_TIMEOUT_SECONDS"] = previous_timeout
+        self.assertEqual(client.request_timeout_seconds, 45)
 
 
 if __name__ == "__main__":
