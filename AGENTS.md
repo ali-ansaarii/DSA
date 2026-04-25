@@ -100,6 +100,10 @@ algorithm_name/
 - Use `main` as the runner filename where language conventions allow (`main.cpp`, `main.py`, `main.rs`).
 - For Java, keep public class/file naming conventions (for example, `Main.java`, `DFS.java`).
 - Use plain descriptive branch names without a `codex/` prefix.
+- Standardize branch names as lowercase kebab-case.
+- For algorithm delivery branches, prefer the algorithm name directly (example: `segment-tree`, `bellman-ford`).
+- For non-algorithm work, use a short purpose prefix plus a concise kebab-case subject (examples: `repo-acceleration-system`, `docs-full-automation-plan`, `infra-review-poller`).
+- Avoid slashes, random abbreviations, ticket-style noise, and mixed naming conventions in branch names so local tooling, worktrees, and automation can handle branches consistently.
 - Use plain descriptive PR titles without a `[codex]` prefix.
 
 ## Rust Rules
