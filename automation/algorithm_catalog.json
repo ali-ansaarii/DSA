@@ -1,0 +1,13 @@
+{
+  "Trie": {
+    "checklist_label": "Trie",
+    "topic_path": "string/Trie",
+    "display_name": "Trie",
+    "algo_id": "Trie",
+    "binary_name": "trie",
+    "time_flag": "time-trie",
+    "branch_name": "trie",
+    "pr_title": "Add Trie",
+    "prompt_notes": "Use a baseline trie with commands for insert, search, and starts_with over lowercase English words. Keep the input format command-based and consistent across all four languages."
+  }
+}
