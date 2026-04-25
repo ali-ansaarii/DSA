@@ -426,9 +426,9 @@ def sanitize_rust_module_name(binary_name: str) -> str:
 def validate_binary_name(binary_name: str) -> str:
     if not binary_name:
         raise SystemExit("binary name must not be empty")
-    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", binary_name):
+    if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_-]*", binary_name):
         raise SystemExit(
-            "binary name must match [A-Za-z0-9][A-Za-z0-9_-]* for Cargo/package safety"
+            "binary name must match [A-Za-z_][A-Za-z0-9_-]* for Cargo/package safety"
         )
     return binary_name
 
