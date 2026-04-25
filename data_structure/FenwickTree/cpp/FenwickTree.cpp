@@ -15,10 +15,12 @@ bool CheckedAdd(long long a, long long b, long long& result) {
 }
 
 bool CheckedSub(long long a, long long b, long long& result) {
-    if (b == numeric_limits<long long>::min()) {
+    if ((b > 0 && a < numeric_limits<long long>::min() + b) ||
+        (b < 0 && a > numeric_limits<long long>::max() + b)) {
         return false;
     }
-    return CheckedAdd(a, -b, result);
+    result = a - b;
+    return true;
 }
 
 class FenwickTree {
