@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 from string import Template
 
@@ -14,7 +15,7 @@ JAVAC ?= javac
 JAVA ?= java
 
 MAKEFILE_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
-REPO_ROOT ?= $(abspath $(MAKEFILE_DIR)/../..)
+REPO_ROOT ?= $(shell git -C "$(MAKEFILE_DIR)" rev-parse --show-toplevel 2>/dev/null || printf '%s\n' "$(MAKEFILE_DIR)")
 
 CPP_DIR := $(MAKEFILE_DIR)/cpp
 PY_DIR := $(MAKEFILE_DIR)/python
@@ -407,6 +408,15 @@ def render_plain_template(template: str, substitutions: dict[str, str]) -> str:
     return rendered
 
 
+def sanitize_rust_module_name(binary_name: str) -> str:
+    sanitized = re.sub(r"[^A-Za-z0-9_]", "_", binary_name)
+    if not sanitized:
+        raise SystemExit("binary name must contain at least one identifier character")
+    if sanitized[0].isdigit():
+        sanitized = f"module_{sanitized}"
+    return sanitized
+
+
 def main() -> int:
     args = parse_args()
     repo_root = Path(__file__).resolve().parents[1]
@@ -423,7 +433,7 @@ def main() -> int:
         if any(topic_dir.iterdir()):
             raise SystemExit(f"refusing to scaffold into non-empty path: {topic_dir}")
 
-    rust_module = args.binary_name
+    rust_module = sanitize_rust_module_name(args.binary_name)
     time_var = args.time_flag.replace("-", "_")
 
     substitutions = {
