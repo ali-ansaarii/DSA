@@ -11,12 +11,12 @@
   - rectangular challenging input with a long shared dimension
 
 ## Folder Layout
-- `classical/` contains the direct triple-loop implementation.
-- `blocked/` contains the cache-blocked implementation.
-- `inputs/` is shared by both variants so result formatting and parsing stay identical.
+- `cpp/`, `python/`, `java/`, and `rust/` contain the language implementations.
+- `inputs/` contains shared input data and expected output.
+- `logs/` is created by benchmark targets and stores benchmark result matrices.
 
 ## Run Commands
-From this topic folder, the default `run_*` targets execute the classical variant:
+From this topic folder, run a language implementation with:
 
 ```bash
 make run_cpp
@@ -25,33 +25,20 @@ make run_java
 make run_rs
 ```
 
-Convenience alias:
+Convenience alias, defaulting to C++:
 
 ```bash
 make run
 ```
 
-To run a specific variant, invoke its Makefile directly:
-
-```bash
-make -C classical run_cpp
-make -C blocked run_cpp
-make -C classical run_py
-make -C blocked run_py
-make -C classical run_java
-make -C blocked run_java
-make -C classical run_rs
-make -C blocked run_rs
-```
-
 You can pass a different input file with `INPUT`:
 
 ```bash
-make -C blocked run_cpp INPUT=$PWD/inputs/input_challenge.txt
+make run_cpp INPUT=$PWD/inputs/input_challenge.txt
 ```
 
 ## Build Commands
-The parent build targets build both variants for that language:
+Build compiled implementations with:
 
 ```bash
 make build_cpp
@@ -60,21 +47,16 @@ make build_rs
 make build
 ```
 
-Variant-local build targets are also available:
-
-```bash
-make -C classical build_cpp
-make -C blocked build_cpp
-```
+`make build` is a convenience alias for `make build_cpp`. Python does not need a build step.
 
 ## Benchmark Commands
-General benchmark input, across both variants and all languages:
+General benchmark input across all languages:
 
 ```bash
 make benchmark_long
 ```
 
-Algorithm-specific challenge input, across both variants and all languages:
+Algorithm-specific challenge input across all languages:
 
 ```bash
 make benchmark_challenge
@@ -87,8 +69,12 @@ make benchmark_long_cpp
 make benchmark_challenge_rs
 ```
 
+Benchmark targets write each program's result matrix to `logs/<language>-long.out` or `logs/<language>-challenge.out`.
+
 ## Benchmark Scope
-Benchmark targets use `scripts/benchmark_with_memory.sh` to measure whole-program wall-clock time and memory from process start to exit. The `--time-matrix-multiplication` flag additionally makes each implementation print an algorithm-only elapsed time to standard error. That algorithm-only timer excludes input parsing and output formatting, and wraps only the core multiplication call.
+The benchmark targets invoke each language runner directly with the selected input and the `--time-matrix-multiplication` flag. That flag makes each implementation print an algorithm-only elapsed time to standard error, excluding input parsing and output formatting and wrapping only the core multiplication call.
+
+The current benchmark targets do not use a whole-program timing or memory wrapper, so they do not report process-level memory usage.
 
 ## Expected Small-Input Output
 ```text
