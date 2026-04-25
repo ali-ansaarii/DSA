@@ -10,7 +10,7 @@ from urllib import request
 from automation.shell import run_command
 
 
-BOT_LOGIN = "chatgpt-codex-connector[bot]"
+BOT_LOGINS = {"chatgpt-codex-connector[bot]", "chatgpt-codex-connector"}
 CLEAN_REVIEW_RE = re.compile(r"didn['’]?t find any major issues", re.IGNORECASE)
 
 
@@ -209,7 +209,7 @@ def parse_review_payload(payload: dict) -> ReviewStatus:
         bot_comments = [
             comment
             for comment in comments
-            if ((comment.get("author") or {}).get("login") == BOT_LOGIN)
+            if ((comment.get("author") or {}).get("login") in BOT_LOGINS)
         ]
         if not bot_comments:
             continue
@@ -220,7 +220,7 @@ def parse_review_payload(payload: dict) -> ReviewStatus:
                 line=latest.get("line"),
                 body=latest["body"],
                 url=latest.get("url"),
-                author=BOT_LOGIN,
+                author=(latest.get("author") or {}).get("login", ""),
                 created_at=latest.get("createdAt"),
             )
         )
@@ -228,7 +228,7 @@ def parse_review_payload(payload: dict) -> ReviewStatus:
     bot_issue_comments = [
         comment
         for comment in issue_comments
-        if ((comment.get("author") or {}).get("login") == BOT_LOGIN)
+        if ((comment.get("author") or {}).get("login") in BOT_LOGINS)
     ]
     latest_bot_comment = bot_issue_comments[-1]["body"] if bot_issue_comments else None
 

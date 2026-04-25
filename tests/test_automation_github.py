@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from automation.github import (
-    BOT_LOGIN,
+    BOT_LOGINS,
     get_review_token,
     parse_review_payload,
     request_codex_review,
@@ -15,6 +15,10 @@ from automation.github import (
 
 
 class GitHubReviewParsingTests(unittest.TestCase):
+    def test_bot_login_set_covers_issue_and_review_surfaces(self) -> None:
+        self.assertIn("chatgpt-codex-connector[bot]", BOT_LOGINS)
+        self.assertIn("chatgpt-codex-connector", BOT_LOGINS)
+
     def test_clean_review_detected_from_bot_issue_comment(self) -> None:
         payload = {
             "data": {
@@ -24,7 +28,7 @@ class GitHubReviewParsingTests(unittest.TestCase):
                         "comments": {
                             "nodes": [
                                 {
-                                    "author": {"login": BOT_LOGIN},
+                                    "author": {"login": "chatgpt-codex-connector[bot]"},
                                     "body": "Codex Review: Didn't find any major issues. Nice work!",
                                     "createdAt": "2026-04-25T10:00:00Z",
                                     "url": "https://example.test/comment/1",
@@ -51,7 +55,7 @@ class GitHubReviewParsingTests(unittest.TestCase):
                                     "comments": {
                                         "nodes": [
                                             {
-                                                "author": {"login": BOT_LOGIN},
+                                                "author": {"login": "chatgpt-codex-connector"},
                                                 "body": "P2: This parser accepts trailing junk.",
                                                 "path": "array/Topic/python/main.py",
                                                 "line": 42,
