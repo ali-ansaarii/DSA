@@ -73,37 +73,37 @@ benchmark_long: benchmark_long_cpp benchmark_long_py benchmark_long_java benchma
 
 benchmark_long_cpp: build_cpp
 	@printf '\n[Insertion Sort][C++] %s\n' "$(LONG_INPUT)"
-	@$(BENCH_WRAPPER) $(BUILD_DIR)/$(TARGET) $(LONG_INPUT) --time-insertion-sort
+	@$(BENCH_WRAPPER) sh -c 'exec "$$@" 2>&1' insertion-sort-benchmark "$(BUILD_DIR)/$(TARGET)" "$(LONG_INPUT)" --time-insertion-sort
 
 benchmark_long_py:
 	@printf '\n[Insertion Sort][Python] %s\n' "$(LONG_INPUT)"
-	@$(BENCH_WRAPPER) $(PYTHON) $(PY_DIR)/main.py $(LONG_INPUT) --time-insertion-sort
+	@$(BENCH_WRAPPER) sh -c 'exec "$$@" 2>&1' insertion-sort-benchmark "$(PYTHON)" "$(PY_DIR)/main.py" "$(LONG_INPUT)" --time-insertion-sort
 
 benchmark_long_java: build_java
 	@printf '\n[Insertion Sort][Java] %s\n' "$(LONG_INPUT)"
-	@$(BENCH_WRAPPER) $(JAVA) -cp $(JAVA_DIR)/build Main $(LONG_INPUT) --time-insertion-sort
+	@$(BENCH_WRAPPER) sh -c 'exec "$$@" 2>&1' insertion-sort-benchmark "$(JAVA)" -cp "$(JAVA_DIR)/build" Main "$(LONG_INPUT)" --time-insertion-sort
 
 benchmark_long_rs: build_rs
 	@printf '\n[Insertion Sort][Rust] %s\n' "$(LONG_INPUT)"
-	@$(BENCH_WRAPPER) $(RUST_DIR)/target/release/insertion-sort $(LONG_INPUT) --time-insertion-sort
+	@$(BENCH_WRAPPER) sh -c 'exec "$$@" 2>&1' insertion-sort-benchmark "$(RUST_DIR)/target/release/insertion-sort" "$(LONG_INPUT)" --time-insertion-sort
 
 benchmark_challenge: benchmark_challenge_cpp benchmark_challenge_py benchmark_challenge_java benchmark_challenge_rs
 
 benchmark_challenge_cpp: build_cpp
 	@printf '\n[Insertion Sort][C++][challenge] %s\n' "$(CHALLENGE_INPUT)"
-	@$(BENCH_WRAPPER) $(BUILD_DIR)/$(TARGET) $(CHALLENGE_INPUT) --time-insertion-sort
+	@$(BENCH_WRAPPER) sh -c 'exec "$$@" 2>&1' insertion-sort-benchmark "$(BUILD_DIR)/$(TARGET)" "$(CHALLENGE_INPUT)" --time-insertion-sort
 
 benchmark_challenge_py:
 	@printf '\n[Insertion Sort][Python][challenge] %s\n' "$(CHALLENGE_INPUT)"
-	@$(BENCH_WRAPPER) $(PYTHON) $(PY_DIR)/main.py $(CHALLENGE_INPUT) --time-insertion-sort
+	@$(BENCH_WRAPPER) sh -c 'exec "$$@" 2>&1' insertion-sort-benchmark "$(PYTHON)" "$(PY_DIR)/main.py" "$(CHALLENGE_INPUT)" --time-insertion-sort
 
 benchmark_challenge_java: build_java
 	@printf '\n[Insertion Sort][Java][challenge] %s\n' "$(CHALLENGE_INPUT)"
-	@$(BENCH_WRAPPER) $(JAVA) -cp $(JAVA_DIR)/build Main $(CHALLENGE_INPUT) --time-insertion-sort
+	@$(BENCH_WRAPPER) sh -c 'exec "$$@" 2>&1' insertion-sort-benchmark "$(JAVA)" -cp "$(JAVA_DIR)/build" Main "$(CHALLENGE_INPUT)" --time-insertion-sort
 
 benchmark_challenge_rs: build_rs
 	@printf '\n[Insertion Sort][Rust][challenge] %s\n' "$(CHALLENGE_INPUT)"
-	@$(BENCH_WRAPPER) $(RUST_DIR)/target/release/insertion-sort $(CHALLENGE_INPUT) --time-insertion-sort
+	@$(BENCH_WRAPPER) sh -c 'exec "$$@" 2>&1' insertion-sort-benchmark "$(RUST_DIR)/target/release/insertion-sort" "$(CHALLENGE_INPUT)" --time-insertion-sort
 
 clean:
 	@rm -rf $(BUILD_DIR) $(PY_DIR)/__pycache__ $(RUST_DIR)/target $(JAVA_DIR)/build $(LOG_DIR)
