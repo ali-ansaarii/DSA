@@ -23,5 +23,71 @@
     "branch_name": "kmp",
     "pr_title": "Add KMP",
     "prompt_notes": "Implement the classical Knuth-Morris-Pratt string matching algorithm using the prefix-function (LPS) preprocessing step. Use command-free input with one text and one pattern per run, and document clearly that the algorithm reports all match starting indices."
+  },
+  "Insertion Sort": {
+    "checklist_label": "Insertion Sort",
+    "topic_path": "sorting/InsertionSort",
+    "display_name": "Insertion Sort",
+    "algo_id": "InsertionSort",
+    "binary_name": "insertion-sort",
+    "time_flag": "time-insertion-sort",
+    "branch_name": "insertion-sort",
+    "pr_title": "Add Insertion Sort",
+    "prompt_notes": "Implement classical insertion sort over signed 64-bit integers. Use a simple array input format and document clearly that the algorithm is in-place, stable, and quadratic in the worst case."
+  },
+  "Merge Sort": {
+    "checklist_label": "Merge Sort",
+    "topic_path": "sorting/MergeSort",
+    "display_name": "Merge Sort",
+    "algo_id": "MergeSort",
+    "binary_name": "merge-sort",
+    "time_flag": "time-merge-sort",
+    "branch_name": "merge-sort",
+    "pr_title": "Add Merge Sort",
+    "prompt_notes": "Implement top-down merge sort over signed 64-bit integers. Use a simple array input format and document clearly that the algorithm is stable, uses auxiliary memory, and guarantees O(n log n) time."
+  },
+  "Quick Sort": {
+    "checklist_label": "Quick Sort",
+    "topic_path": "sorting/QuickSort",
+    "display_name": "Quick Sort",
+    "algo_id": "QuickSort",
+    "binary_name": "quick-sort",
+    "time_flag": "time-quick-sort",
+    "branch_name": "quick-sort",
+    "pr_title": "Add Quick Sort",
+    "prompt_notes": "Implement classical quick sort over signed 64-bit integers with an explicit pivot strategy documented in the problem statement. Use a simple array input format and include a challenging input that stresses poor partition behavior."
+  },
+  "Heap Sort": {
+    "checklist_label": "Heap Sort",
+    "topic_path": "sorting/HeapSort",
+    "display_name": "Heap Sort",
+    "algo_id": "HeapSort",
+    "binary_name": "heap-sort",
+    "time_flag": "time-heap-sort",
+    "branch_name": "heap-sort",
+    "pr_title": "Add Heap Sort",
+    "prompt_notes": "Implement in-place heap sort over signed 64-bit integers using a max-heap. Use a simple array input format and document clearly that the algorithm is not stable but guarantees O(n log n) time."
+  },
+  "Counting Sort": {
+    "checklist_label": "Counting Sort",
+    "topic_path": "sorting/CountingSort",
+    "display_name": "Counting Sort",
+    "algo_id": "CountingSort",
+    "binary_name": "counting-sort",
+    "time_flag": "time-counting-sort",
+    "branch_name": "counting-sort",
+    "pr_title": "Add Counting Sort",
+    "prompt_notes": "Implement counting sort for bounded integers with the input explicitly providing the value range. Keep the format simple, validate range assumptions carefully, and document that the algorithm trades memory for linear-time sorting under bounded domains."
+  },
+  "Radix Sort": {
+    "checklist_label": "Radix Sort",
+    "topic_path": "sorting/RadixSort",
+    "display_name": "Radix Sort",
+    "algo_id": "RadixSort",
+    "binary_name": "radix-sort",
+    "time_flag": "time-radix-sort",
+    "branch_name": "radix-sort",
+    "pr_title": "Add Radix Sort",
+    "prompt_notes": "Implement least-significant-digit radix sort for non-negative integers using a stable counting-sort pass per digit. Use an input format that makes the non-negative constraint explicit and document that stability is required across digit passes."
   }
 }
