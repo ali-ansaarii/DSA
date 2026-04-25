@@ -17,7 +17,7 @@ TARGET := selection-sort
 CPP_SRC := $(CPP_DIR)/SelectionSort.cpp $(CPP_DIR)/main.cpp
 CPP_HDR := $(CPP_DIR)/SelectionSort.hpp
 BENCH_WRAPPER ?= $(REPO_ROOT)/scripts/benchmark_with_memory.sh
-BENCH_WITH_TIMING := sh -c 'exec "$$@" 2>&1' benchmark-timing
+BENCH_STDERR_TO_STDOUT := sh -c 'exec "$$@" 2>&1' benchmark-stderr-to-stdout
 LOG_DIR := $(MAKEFILE_DIR)/logs
 CPP_BUILD_LOG := $(LOG_DIR)/build_cpp.log
 JAVA_BUILD_LOG := $(LOG_DIR)/build_java.log
@@ -74,37 +74,37 @@ benchmark_long: benchmark_long_cpp benchmark_long_py benchmark_long_java benchma
 
 benchmark_long_cpp: build_cpp
 	@printf '\n[Selection Sort][C++] %s\n' "$(LONG_INPUT)"
-	@$(BENCH_WRAPPER) $(BENCH_WITH_TIMING) $(BUILD_DIR)/$(TARGET) $(LONG_INPUT) --time-selection-sort
+	@$(BENCH_WRAPPER) $(BENCH_STDERR_TO_STDOUT) $(BUILD_DIR)/$(TARGET) $(LONG_INPUT) --time-selection-sort
 
 benchmark_long_py:
 	@printf '\n[Selection Sort][Python] %s\n' "$(LONG_INPUT)"
-	@$(BENCH_WRAPPER) $(BENCH_WITH_TIMING) $(PYTHON) $(PY_DIR)/main.py $(LONG_INPUT) --time-selection-sort
+	@$(BENCH_WRAPPER) $(BENCH_STDERR_TO_STDOUT) $(PYTHON) $(PY_DIR)/main.py $(LONG_INPUT) --time-selection-sort
 
 benchmark_long_java: build_java
 	@printf '\n[Selection Sort][Java] %s\n' "$(LONG_INPUT)"
-	@$(BENCH_WRAPPER) $(BENCH_WITH_TIMING) $(JAVA) -cp $(JAVA_DIR)/build Main $(LONG_INPUT) --time-selection-sort
+	@$(BENCH_WRAPPER) $(BENCH_STDERR_TO_STDOUT) $(JAVA) -cp $(JAVA_DIR)/build Main $(LONG_INPUT) --time-selection-sort
 
 benchmark_long_rs: build_rs
 	@printf '\n[Selection Sort][Rust] %s\n' "$(LONG_INPUT)"
-	@$(BENCH_WRAPPER) $(BENCH_WITH_TIMING) $(RUST_DIR)/target/release/selection-sort $(LONG_INPUT) --time-selection-sort
+	@$(BENCH_WRAPPER) $(BENCH_STDERR_TO_STDOUT) $(RUST_DIR)/target/release/selection-sort $(LONG_INPUT) --time-selection-sort
 
 benchmark_challenge: benchmark_challenge_cpp benchmark_challenge_py benchmark_challenge_java benchmark_challenge_rs
 
 benchmark_challenge_cpp: build_cpp
 	@printf '\n[Selection Sort][C++][challenge] %s\n' "$(CHALLENGE_INPUT)"
-	@$(BENCH_WRAPPER) $(BENCH_WITH_TIMING) $(BUILD_DIR)/$(TARGET) $(CHALLENGE_INPUT) --time-selection-sort
+	@$(BENCH_WRAPPER) $(BENCH_STDERR_TO_STDOUT) $(BUILD_DIR)/$(TARGET) $(CHALLENGE_INPUT) --time-selection-sort
 
 benchmark_challenge_py:
 	@printf '\n[Selection Sort][Python][challenge] %s\n' "$(CHALLENGE_INPUT)"
-	@$(BENCH_WRAPPER) $(BENCH_WITH_TIMING) $(PYTHON) $(PY_DIR)/main.py $(CHALLENGE_INPUT) --time-selection-sort
+	@$(BENCH_WRAPPER) $(BENCH_STDERR_TO_STDOUT) $(PYTHON) $(PY_DIR)/main.py $(CHALLENGE_INPUT) --time-selection-sort
 
 benchmark_challenge_java: build_java
 	@printf '\n[Selection Sort][Java][challenge] %s\n' "$(CHALLENGE_INPUT)"
-	@$(BENCH_WRAPPER) $(BENCH_WITH_TIMING) $(JAVA) -cp $(JAVA_DIR)/build Main $(CHALLENGE_INPUT) --time-selection-sort
+	@$(BENCH_WRAPPER) $(BENCH_STDERR_TO_STDOUT) $(JAVA) -cp $(JAVA_DIR)/build Main $(CHALLENGE_INPUT) --time-selection-sort
 
 benchmark_challenge_rs: build_rs
 	@printf '\n[Selection Sort][Rust][challenge] %s\n' "$(CHALLENGE_INPUT)"
-	@$(BENCH_WRAPPER) $(BENCH_WITH_TIMING) $(RUST_DIR)/target/release/selection-sort $(CHALLENGE_INPUT) --time-selection-sort
+	@$(BENCH_WRAPPER) $(BENCH_STDERR_TO_STDOUT) $(RUST_DIR)/target/release/selection-sort $(CHALLENGE_INPUT) --time-selection-sort
 
 clean:
 	@rm -rf $(BUILD_DIR) $(PY_DIR)/__pycache__ $(RUST_DIR)/target $(JAVA_DIR)/build $(LOG_DIR)
