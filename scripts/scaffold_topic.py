@@ -423,6 +423,16 @@ def sanitize_rust_module_name(binary_name: str) -> str:
     return sanitize_identifier(binary_name, noun="binary name", prefix="module_")
 
 
+def validate_binary_name(binary_name: str) -> str:
+    if not binary_name:
+        raise SystemExit("binary name must not be empty")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", binary_name):
+        raise SystemExit(
+            "binary name must match [A-Za-z0-9][A-Za-z0-9_-]* for Cargo/package safety"
+        )
+    return binary_name
+
+
 def sanitize_time_var_name(time_flag: str) -> str:
     sanitized = sanitize_identifier(time_flag, noun="time flag", prefix="flag_")
     return f"time_flag_{sanitized}"
@@ -454,17 +464,20 @@ def main() -> int:
     if topic_dir.exists():
         if not args.force:
             raise SystemExit(f"refusing to overwrite existing path: {topic_dir}")
+        if not topic_dir.is_dir():
+            raise SystemExit(f"refusing to scaffold into non-directory path: {topic_dir}")
         if any(topic_dir.iterdir()):
             raise SystemExit(f"refusing to scaffold into non-empty path: {topic_dir}")
 
     algo_id = validate_algo_id(args.algo_id)
-    rust_module = sanitize_rust_module_name(args.binary_name)
+    binary_name = validate_binary_name(args.binary_name)
+    rust_module = sanitize_rust_module_name(binary_name)
     time_var = sanitize_time_var_name(args.time_flag)
 
     substitutions = {
         "display_name": args.display_name,
         "algo_id": algo_id,
-        "binary_name": args.binary_name,
+        "binary_name": binary_name,
         "time_flag": args.time_flag,
         "time_var": time_var,
         "rust_module": rust_module,
