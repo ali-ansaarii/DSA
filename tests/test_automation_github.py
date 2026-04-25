@@ -123,6 +123,32 @@ class GitHubReviewParsingTests(unittest.TestCase):
         self.assertEqual(status.state, "clean")
         self.assertEqual(status.actionable_comments, [])
 
+    def test_non_clean_bot_review_is_not_treated_as_clean(self) -> None:
+        payload = {
+            "data": {
+                "repository": {
+                    "pullRequest": {
+                        "reviewThreads": {"nodes": []},
+                        "comments": {"nodes": []},
+                        "reviews": {
+                            "nodes": [
+                                {
+                                    "author": {"login": "chatgpt-codex-connector"},
+                                    "body": "Please address the remaining concerns.",
+                                    "submittedAt": "2026-04-25T19:00:00Z",
+                                    "state": "CHANGES_REQUESTED",
+                                }
+                            ]
+                        },
+                    }
+                }
+            }
+        }
+        status = parse_review_payload(payload)
+        self.assertEqual(status.state, "actionable")
+        self.assertEqual(len(status.actionable_comments), 1)
+        self.assertIn("remaining concerns", status.actionable_comments[0].body)
+
 
 class GitHubReviewRequestTests(unittest.TestCase):
     def test_get_review_token_prefers_explicit_review_token(self) -> None:

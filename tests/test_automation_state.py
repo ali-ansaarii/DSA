@@ -46,6 +46,35 @@ class RunStateTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             state.validate_transition(state.STATE_QUEUED, state.STATE_VERIFIED)
 
+    def test_review_comments_round_trip(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            paths = state.RunPaths.create(Path(temp_dir), "trie")
+            store = state.RunStore(paths)
+            snapshot = state.RunSnapshot(
+                run_id="trie",
+                algorithm_name="Trie",
+                checklist_label="Trie",
+                branch_name="trie",
+                topic_path="string/Trie",
+                display_name="Trie",
+                pr_title="Add Trie",
+            )
+            store.initialize(snapshot)
+            comments = [
+                {
+                    "path": "string/Trie/Makefile",
+                    "line": 10,
+                    "body": "P2: sample review comment",
+                    "url": "https://example.test/comment/1",
+                    "author": "chatgpt-codex-connector",
+                    "created_at": "2026-04-25T20:00:00Z",
+                }
+            ]
+            store.save_review_comments(comments)
+            self.assertEqual(store.load_review_comments(), comments)
+            store.clear_review_comments()
+            self.assertEqual(store.load_review_comments(), [])
+
 
 if __name__ == "__main__":
     unittest.main()

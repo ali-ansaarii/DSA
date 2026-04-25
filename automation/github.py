@@ -277,6 +277,7 @@ def parse_review_payload(payload: dict, *, not_before: str | None = None) -> Rev
             and _is_after_threshold(review.get("submittedAt"), not_before)
         )
     ]
+    latest_bot_review = recent_bot_reviews[-1] if recent_bot_reviews else None
 
     if actionable:
         return ReviewStatus(
@@ -292,11 +293,27 @@ def parse_review_payload(payload: dict, *, not_before: str | None = None) -> Rev
             latest_bot_comment=latest_bot_comment,
         )
 
-    if recent_bot_reviews:
+    if latest_bot_review and latest_bot_review.get("state") in {"APPROVED", "COMMENTED"}:
         return ReviewStatus(
             state="clean",
             actionable_comments=[],
-            latest_bot_comment=latest_bot_comment or recent_bot_reviews[-1].get("body"),
+            latest_bot_comment=latest_bot_comment or latest_bot_review.get("body"),
+        )
+
+    if latest_bot_review:
+        return ReviewStatus(
+            state="actionable",
+            actionable_comments=[
+                ReviewComment(
+                    path=None,
+                    line=None,
+                    body=latest_bot_review.get("body") or "non-clean bot review",
+                    url=None,
+                    author=(latest_bot_review.get("author") or {}).get("login", ""),
+                    created_at=latest_bot_review.get("submittedAt"),
+                )
+            ],
+            latest_bot_comment=latest_bot_comment or latest_bot_review.get("body"),
         )
 
     return ReviewStatus(

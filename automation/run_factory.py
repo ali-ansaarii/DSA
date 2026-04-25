@@ -332,12 +332,17 @@ class AutomationRunner:
                     raise RuntimeError("review returned actionable comments after bounded fix attempts")
                 self.snapshot.review_fix_attempts += 1
                 self.store.save_snapshot(self.snapshot)
+                serialized_comments = [comment.__dict__ for comment in status.actionable_comments]
+                self.store.save_review_comments(serialized_comments)
                 self._cached_review_comments = status.actionable_comments
                 self.snapshot = self.store.transition(
                     self.snapshot,
                     step_name="review_actionable",
                     next_state=state.STATE_REVIEW_FIXING,
-                    evidence={"comments": len(status.actionable_comments)},
+                    evidence={
+                        "comments": len(status.actionable_comments),
+                        "review_comments_path": str(self.paths.review_comments_path),
+                    },
                     note="Codex review returned actionable unresolved comments",
                 )
                 return
@@ -351,7 +356,20 @@ class AutomationRunner:
         self._ensure_run_branch_checked_out()
         comments = getattr(self, "_cached_review_comments", None)
         if not comments:
-            raise RuntimeError("review_fixing state entered without cached actionable comments")
+            persisted = self.store.load_review_comments()
+            comments = [
+                github.ReviewComment(
+                    path=entry.get("path"),
+                    line=entry.get("line"),
+                    body=entry["body"],
+                    url=entry.get("url"),
+                    author=entry.get("author", ""),
+                    created_at=entry.get("created_at"),
+                )
+                for entry in persisted
+            ]
+        if not comments:
+            raise RuntimeError("review_fixing state entered without persisted actionable comments")
         result = self._ensure_model_client().generate_review_fix_bundle(
             repo_root=self.repo_root,
             spec=self.spec,
@@ -367,6 +385,7 @@ class AutomationRunner:
             note=result.bundle.summary,
         )
         self._cached_review_comments = None
+        self.store.clear_review_comments()
 
     def _merge_pr(self) -> None:
         self._ensure_run_branch_checked_out()

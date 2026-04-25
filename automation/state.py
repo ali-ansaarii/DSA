@@ -124,6 +124,7 @@ class RunPaths:
     generation_log_path: Path
     verification_log_path: Path
     review_log_path: Path
+    review_comments_path: Path
     summary_path: Path
 
     @classmethod
@@ -136,6 +137,7 @@ class RunPaths:
             generation_log_path=run_dir / "generation.log",
             verification_log_path=run_dir / "verification.log",
             review_log_path=run_dir / "review.log",
+            review_comments_path=run_dir / "review_comments.json",
             summary_path=run_dir / "summary.txt",
         )
 
@@ -254,6 +256,22 @@ class RunStore:
         self._ensure_parent_dir()
         with self.paths.summary_path.open("a", encoding="utf-8") as handle:
             handle.write(line.rstrip() + "\n")
+
+    def save_review_comments(self, comments: list[dict[str, Any]]) -> None:
+        self._ensure_parent_dir()
+        self.paths.review_comments_path.write_text(
+            json.dumps(comments, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+
+    def load_review_comments(self) -> list[dict[str, Any]]:
+        if not self.paths.review_comments_path.exists():
+            return []
+        return json.loads(self.paths.review_comments_path.read_text(encoding="utf-8"))
+
+    def clear_review_comments(self) -> None:
+        if self.paths.review_comments_path.exists():
+            self.paths.review_comments_path.unlink()
 
 
 def validate_transition(current_state: str, next_state: str) -> None:

@@ -206,6 +206,7 @@ class QueueRunner:
         for entry in plan:
             if entry.status != "runnable":
                 continue
+            git_ops.pull_base_ff_only(self.repo_root, self.args.base_branch)
             spec = self.catalog_specs_by_label[entry.label]
             result = self._run_single_algorithm(spec)
             summary["results"].append(result)
