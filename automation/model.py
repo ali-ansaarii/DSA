@@ -39,14 +39,25 @@ def load_env_defaults(env_path: Path) -> None:
         if not line or line.startswith("#"):
             continue
         non_comment_lines.append(line)
-        if "=" not in line:
+        separator = None
+        if "=" in line:
+            separator = "="
+        elif ":" in line:
+            separator = ":"
+
+        if separator is None:
             continue
-        key, value = line.split("=", 1)
+        key, value = line.split(separator, 1)
         key = key.strip()
         if key and key not in os.environ:
             os.environ[key] = value.strip().strip("\"'")
 
-    if "OPENAI_API_KEY" not in os.environ and len(non_comment_lines) == 1 and "=" not in non_comment_lines[0]:
+    if (
+        "OPENAI_API_KEY" not in os.environ
+        and len(non_comment_lines) == 1
+        and "=" not in non_comment_lines[0]
+        and ":" not in non_comment_lines[0]
+    ):
         os.environ["OPENAI_API_KEY"] = non_comment_lines[0]
 
 
