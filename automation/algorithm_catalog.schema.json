@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/dsa/automation/algorithm_catalog.schema.json",
+  "title": "Algorithm Automation Catalog",
+  "description": "Schema for the DSA automation catalog. The current runtime consumes a subset of these fields; additional fields exist to lock scope and variant decisions before automation runs.",
+  "type": "object",
+  "patternProperties": {
+    "^.+$": {
+      "type": "object",
+      "required": [
+        "checklist_label",
+        "topic_path",
+        "display_name",
+        "algo_id",
+        "binary_name",
+        "time_flag",
+        "branch_name",
+        "pr_title",
+        "prompt_notes"
+      ],
+      "properties": {
+        "algorithm_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "checklist_label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "checklist_aliases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "default": []
+        },
+        "topic_path": {
+          "type": "string",
+          "pattern": "^[^/]+(?:/[^/]+)+$"
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "algo_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "binary_name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$"
+        },
+        "time_flag": {
+          "type": "string",
+          "minLength": 1
+        },
+        "branch_name": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "pr_title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prompt_notes": {
+          "type": "string"
+        },
+        "benchmark_expected": {
+          "type": "boolean",
+          "default": true
+        },
+        "entry_kind": {
+          "type": "string",
+          "enum": [
+            "single_topic",
+            "variant_parent"
+          ]
+        },
+        "family": {
+          "type": "string"
+        },
+        "canonical_problem": {
+          "type": "string"
+        },
+        "input_contract": {
+          "type": "string"
+        },
+        "shared_inputs": {
+          "type": "boolean"
+        },
+        "variants": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "design_status": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "needs_variant_decision",
+            "needs_prompt_refinement"
+          ]
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
