@@ -17,6 +17,7 @@ TARGET := binary-search-on-answer
 CPP_SRC := $(CPP_DIR)/BinarySearchOnAnswer.cpp $(CPP_DIR)/main.cpp
 CPP_HDR := $(CPP_DIR)/BinarySearchOnAnswer.hpp
 BENCH_WRAPPER ?= $(REPO_ROOT)/scripts/benchmark_with_memory.sh
+BENCH_TIMED_CMD := sh -c 'exec "$$@" 2>&1' sh
 LOG_DIR := $(MAKEFILE_DIR)/logs
 CPP_BUILD_LOG := $(LOG_DIR)/build_cpp.log
 JAVA_BUILD_LOG := $(LOG_DIR)/build_java.log
@@ -73,37 +74,37 @@ benchmark_long: benchmark_long_cpp benchmark_long_py benchmark_long_java benchma
 
 benchmark_long_cpp: build_cpp
 	@printf '\n[Binary Search on Answer][C++] %s\n' "$(LONG_INPUT)"
-	@$(BENCH_WRAPPER) $(BUILD_DIR)/$(TARGET) $(LONG_INPUT) --time-binary-search-on-answer
+	@$(BENCH_WRAPPER) $(BENCH_TIMED_CMD) $(BUILD_DIR)/$(TARGET) $(LONG_INPUT) --time-binary-search-on-answer
 
 benchmark_long_py:
 	@printf '\n[Binary Search on Answer][Python] %s\n' "$(LONG_INPUT)"
-	@$(BENCH_WRAPPER) $(PYTHON) $(PY_DIR)/main.py $(LONG_INPUT) --time-binary-search-on-answer
+	@$(BENCH_WRAPPER) $(BENCH_TIMED_CMD) $(PYTHON) $(PY_DIR)/main.py $(LONG_INPUT) --time-binary-search-on-answer
 
 benchmark_long_java: build_java
 	@printf '\n[Binary Search on Answer][Java] %s\n' "$(LONG_INPUT)"
-	@$(BENCH_WRAPPER) $(JAVA) -cp $(JAVA_DIR)/build Main $(LONG_INPUT) --time-binary-search-on-answer
+	@$(BENCH_WRAPPER) $(BENCH_TIMED_CMD) $(JAVA) -cp $(JAVA_DIR)/build Main $(LONG_INPUT) --time-binary-search-on-answer
 
 benchmark_long_rs: build_rs
 	@printf '\n[Binary Search on Answer][Rust] %s\n' "$(LONG_INPUT)"
-	@$(BENCH_WRAPPER) $(RUST_DIR)/target/release/binary-search-on-answer $(LONG_INPUT) --time-binary-search-on-answer
+	@$(BENCH_WRAPPER) $(BENCH_TIMED_CMD) $(RUST_DIR)/target/release/binary-search-on-answer $(LONG_INPUT) --time-binary-search-on-answer
 
 benchmark_challenge: benchmark_challenge_cpp benchmark_challenge_py benchmark_challenge_java benchmark_challenge_rs
 
 benchmark_challenge_cpp: build_cpp
 	@printf '\n[Binary Search on Answer][C++][challenge] %s\n' "$(CHALLENGE_INPUT)"
-	@$(BENCH_WRAPPER) $(BUILD_DIR)/$(TARGET) $(CHALLENGE_INPUT) --time-binary-search-on-answer
+	@$(BENCH_WRAPPER) $(BENCH_TIMED_CMD) $(BUILD_DIR)/$(TARGET) $(CHALLENGE_INPUT) --time-binary-search-on-answer
 
 benchmark_challenge_py:
 	@printf '\n[Binary Search on Answer][Python][challenge] %s\n' "$(CHALLENGE_INPUT)"
-	@$(BENCH_WRAPPER) $(PYTHON) $(PY_DIR)/main.py $(CHALLENGE_INPUT) --time-binary-search-on-answer
+	@$(BENCH_WRAPPER) $(BENCH_TIMED_CMD) $(PYTHON) $(PY_DIR)/main.py $(CHALLENGE_INPUT) --time-binary-search-on-answer
 
 benchmark_challenge_java: build_java
 	@printf '\n[Binary Search on Answer][Java][challenge] %s\n' "$(CHALLENGE_INPUT)"
-	@$(BENCH_WRAPPER) $(JAVA) -cp $(JAVA_DIR)/build Main $(CHALLENGE_INPUT) --time-binary-search-on-answer
+	@$(BENCH_WRAPPER) $(BENCH_TIMED_CMD) $(JAVA) -cp $(JAVA_DIR)/build Main $(CHALLENGE_INPUT) --time-binary-search-on-answer
 
 benchmark_challenge_rs: build_rs
 	@printf '\n[Binary Search on Answer][Rust][challenge] %s\n' "$(CHALLENGE_INPUT)"
-	@$(BENCH_WRAPPER) $(RUST_DIR)/target/release/binary-search-on-answer $(CHALLENGE_INPUT) --time-binary-search-on-answer
+	@$(BENCH_WRAPPER) $(BENCH_TIMED_CMD) $(RUST_DIR)/target/release/binary-search-on-answer $(CHALLENGE_INPUT) --time-binary-search-on-answer
 
 clean:
 	@rm -rf $(BUILD_DIR) $(PY_DIR)/__pycache__ $(RUST_DIR)/target $(JAVA_DIR)/build $(LOG_DIR)
