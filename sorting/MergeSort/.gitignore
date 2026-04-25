@@ -1,0 +1,6 @@
+logs/
+cpp/build/
+java/build/
+rust/target/
+python/__pycache__/
+*.class
