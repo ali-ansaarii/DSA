@@ -23,6 +23,7 @@ def slugify_branch_name(value: str) -> str:
 class AlgorithmSpec:
     algorithm_name: str
     checklist_label: str
+    checklist_aliases: tuple[str, ...]
     topic_path: str
     display_name: str
     algo_id: str
@@ -41,6 +42,14 @@ class AlgorithmSpec:
     def run_id(self) -> str:
         return self.branch_name
 
+    @property
+    def all_checklist_labels(self) -> tuple[str, ...]:
+        labels = [self.checklist_label]
+        for alias in self.checklist_aliases:
+            if alias not in labels:
+                labels.append(alias)
+        return tuple(labels)
+
     @classmethod
     def from_mapping(
         cls,
@@ -52,11 +61,13 @@ class AlgorithmSpec:
         chosen_name = mapping.get("algorithm_name") or fallback_algorithm_name or algorithm_name
         display_name = mapping["display_name"]
         checklist_label = mapping.get("checklist_label", chosen_name)
+        aliases = tuple(mapping.get("checklist_aliases", []))
         branch_name = mapping.get("branch_name") or slugify_branch_name(chosen_name)
         pr_title = mapping.get("pr_title") or f"Add {display_name}"
         return cls(
             algorithm_name=chosen_name,
             checklist_label=checklist_label,
+            checklist_aliases=aliases,
             topic_path=mapping["topic_path"],
             display_name=display_name,
             algo_id=mapping["algo_id"],
@@ -85,6 +96,36 @@ def load_spec_from_catalog(catalog_path: Path, algorithm_name: str) -> Algorithm
         mapping=entry,
         fallback_algorithm_name=algorithm_name,
     )
+
+
+def load_catalog_specs(catalog_path: Path) -> dict[str, AlgorithmSpec]:
+    if not catalog_path.exists():
+        return {}
+    raw = json.loads(catalog_path.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise ValueError(f"catalog must be a JSON object: {catalog_path}")
+
+    specs_by_name: dict[str, AlgorithmSpec] = {}
+    for algorithm_name, entry in raw.items():
+        if not isinstance(entry, dict):
+            raise ValueError(f"catalog entry must be a JSON object: {algorithm_name}")
+        specs_by_name[algorithm_name] = AlgorithmSpec.from_mapping(
+            algorithm_name=algorithm_name,
+            mapping=entry,
+            fallback_algorithm_name=algorithm_name,
+        )
+    return specs_by_name
+
+
+def load_catalog_specs_by_label(catalog_path: Path) -> dict[str, AlgorithmSpec]:
+    specs_by_algorithm = load_catalog_specs(catalog_path)
+    specs_by_label: dict[str, AlgorithmSpec] = {}
+    for spec in specs_by_algorithm.values():
+        for label in spec.all_checklist_labels:
+            if label in specs_by_label:
+                raise ValueError(f"duplicate checklist label in catalog: {label}")
+            specs_by_label[label] = spec
+    return specs_by_label
 
 
 def build_spec_from_args(args: Any) -> AlgorithmSpec:
@@ -117,4 +158,3 @@ def build_spec_from_args(args: Any) -> AlgorithmSpec:
         mapping=mapping,
         fallback_algorithm_name=args.algorithm,
     )
-

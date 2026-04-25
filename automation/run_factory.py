@@ -21,9 +21,10 @@ class AutomationRunner:
     def __init__(self, repo_root: Path, args: argparse.Namespace) -> None:
         self.repo_root = repo_root
         self.args = args
+        self.local_root = Path(self.args.local_root).resolve()
         self.spec = self._resolve_spec()
         self.paths = state.RunPaths.create(
-            self.repo_root / ".local" / "automation_runs",
+            self.local_root / "automation_runs",
             self.spec.run_id,
         )
         self.store = state.RunStore(self.paths)
@@ -389,14 +390,20 @@ class AutomationRunner:
         )
 
     def _update_checklist(self) -> None:
-        checklist_path = self.repo_root / ".local" / "ALGORITHM_CHECKLIST.md"
-        updated = checklist_ops.mark_algorithm_done(checklist_path, self.spec.checklist_label)
+        checklist_path = self.local_root / "ALGORITHM_CHECKLIST.md"
+        updated = checklist_ops.mark_algorithm_labels_done(
+            checklist_path,
+            list(self.spec.all_checklist_labels),
+        )
         self.snapshot = self.store.transition(
             self.snapshot,
             step_name="update_checklist",
             next_state=state.STATE_CHECKLIST_UPDATED,
             evidence={"updated_entries": updated},
-            note=f"updated checklist label {self.spec.checklist_label}",
+            note=(
+                "updated checklist labels "
+                + ", ".join(self.spec.all_checklist_labels)
+            ),
         )
 
     def _apply_file_bundle(self, bundle: model.FileBundle) -> list[str]:
@@ -515,6 +522,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--prompt-notes")
     parser.add_argument("--no-benchmarks", action="store_true")
     parser.add_argument("--base-branch", default="main")
+    parser.add_argument(
+        "--local-root",
+        default=".local",
+        help="Shared local-state root for checklist and automation manifests",
+    )
     parser.add_argument("--stop-after", choices=sorted(state.ALLOWED_TRANSITIONS))
     parser.add_argument("--max-verification-fixes", type=int, default=3)
     parser.add_argument("--max-review-fixes", type=int, default=3)

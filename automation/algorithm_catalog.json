@@ -9,5 +9,19 @@
     "branch_name": "trie",
     "pr_title": "Add Trie",
     "prompt_notes": "Use a baseline trie with commands for insert, search, and starts_with over lowercase English words. Keep the input format command-based and consistent across all four languages."
+  },
+  "KMP": {
+    "checklist_label": "KMP",
+    "checklist_aliases": [
+      "KMP Prefix Function"
+    ],
+    "topic_path": "string/KMP",
+    "display_name": "KMP",
+    "algo_id": "KMP",
+    "binary_name": "kmp",
+    "time_flag": "time-kmp",
+    "branch_name": "kmp",
+    "pr_title": "Add KMP",
+    "prompt_notes": "Implement the classical Knuth-Morris-Pratt string matching algorithm using the prefix-function (LPS) preprocessing step. Use command-free input with one text and one pattern per run, and document clearly that the algorithm reports all match starting indices."
   }
 }

@@ -353,6 +353,11 @@ Each run should persist:
 Suggested location:
 
 - `.local/automation_runs/<algorithm-id>/`
+- queue summaries under `.local/automation_queue_runs/<queue-run-id>/`
+
+When queue mode uses disposable worktrees, the child runner must still write to
+the shared canonical local root rather than to a worktree-local `.local`
+directory. The checklist and run manifests must remain centralized.
 
 Suggested files:
 
@@ -487,8 +492,10 @@ Goal:
 Must support:
 
 - pick next unchecked item
-- stop on first blocked algorithm
+- isolate each algorithm run in a disposable worktree
+- continue past `manual_attention` or other blocked runs
 - update checklist after successful merge
+- keep a queue-level summary of runnable, blocked, and completed items
 
 ### Phase E: Family Batching
 Goal:

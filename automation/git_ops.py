@@ -95,3 +95,28 @@ def delete_local_branch(repo_root: Path, branch_name: str) -> None:
         ["git", "branch", "-D", branch_name],
         cwd=repo_root,
     )
+
+
+def add_detached_worktree(repo_root: Path, worktree_path: Path, start_point: str) -> None:
+    run_command(
+        [
+            "git",
+            "worktree",
+            "add",
+            "--detach",
+            str(worktree_path),
+            start_point,
+        ],
+        cwd=repo_root,
+    )
+
+
+def remove_worktree(repo_root: Path, worktree_path: Path, *, force: bool = False) -> None:
+    args = ["git", "worktree", "remove"]
+    if force:
+        args.append("--force")
+    args.append(str(worktree_path))
+    run_command(
+        args,
+        cwd=repo_root,
+    )
