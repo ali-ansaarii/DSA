@@ -290,12 +290,18 @@ class AutomationRunner:
     def _poll_review(self) -> None:
         self._ensure_run_branch_checked_out()
         assert self.snapshot.pr_number is not None
-        entered_wait_at = _state_entered_at(self.store.load_progress(), state.STATE_REVIEW_WAITING)
+        progress = self.store.load_progress()
+        entered_wait_at = _state_entered_at(progress, state.STATE_REVIEW_WAITING)
+        latest_review_request_at = _latest_step_timestamp(progress, "request_review")
         if entered_wait_at is None:
             entered_wait_at = datetime.now(tz=UTC)
 
         while True:
-            status = github.fetch_review_status(self.repo_root, self.snapshot.pr_number)
+            status = github.fetch_review_status(
+                self.repo_root,
+                self.snapshot.pr_number,
+                not_before=latest_review_request_at.isoformat() if latest_review_request_at else None,
+            )
             _append_text(
                 self.paths.review_log_path,
                 json.dumps(
@@ -462,6 +468,15 @@ class AutomationRunner:
 def _state_entered_at(progress: list[dict], state_name: str) -> datetime | None:
     for entry in reversed(progress):
         if entry.get("state_after") == state_name:
+            value = entry.get("end_timestamp")
+            if value:
+                return datetime.fromisoformat(value)
+    return None
+
+
+def _latest_step_timestamp(progress: list[dict], step_name: str) -> datetime | None:
+    for entry in reversed(progress):
+        if entry.get("step_name") == step_name:
             value = entry.get("end_timestamp")
             if value:
                 return datetime.fromisoformat(value)

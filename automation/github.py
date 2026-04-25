@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 import json
 import os
 from pathlib import Path
@@ -29,6 +30,23 @@ class ReviewStatus:
     state: str
     actionable_comments: list[ReviewComment]
     latest_bot_comment: str | None
+
+
+def _parse_timestamp(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    normalized = value.replace("Z", "+00:00")
+    return datetime.fromisoformat(normalized)
+
+
+def _is_after_threshold(value: str | None, threshold: str | None) -> bool:
+    if threshold is None:
+        return True
+    observed = _parse_timestamp(value)
+    boundary = _parse_timestamp(threshold)
+    if observed is None or boundary is None:
+        return False
+    return observed > boundary
 
 
 def _load_env_defaults(env_path: Path) -> None:
@@ -143,7 +161,12 @@ def merge_pr(repo_root: Path, pr_number: int) -> None:
     )
 
 
-def fetch_review_status(repo_root: Path, pr_number: int) -> ReviewStatus:
+def fetch_review_status(
+    repo_root: Path,
+    pr_number: int,
+    *,
+    not_before: str | None = None,
+) -> ReviewStatus:
     owner, repo = parse_remote_owner_repo(repo_root)
     query = """
 query($owner: String!, $repo: String!, $number: Int!) {
@@ -172,6 +195,14 @@ query($owner: String!, $repo: String!, $number: Int!) {
           url
         }
       }
+      reviews(last: 20) {
+        nodes {
+          author { login }
+          body
+          submittedAt
+          state
+        }
+      }
     }
   }
 }
@@ -193,13 +224,14 @@ query($owner: String!, $repo: String!, $number: Int!) {
         cwd=repo_root,
     )
     payload = json.loads(result.stdout)
-    return parse_review_payload(payload)
+    return parse_review_payload(payload, not_before=not_before)
 
 
-def parse_review_payload(payload: dict) -> ReviewStatus:
+def parse_review_payload(payload: dict, *, not_before: str | None = None) -> ReviewStatus:
     pull_request = payload["data"]["repository"]["pullRequest"]
     threads = pull_request["reviewThreads"]["nodes"]
     issue_comments = pull_request["comments"]["nodes"]
+    reviews = pull_request["reviews"]["nodes"]
 
     actionable: list[ReviewComment] = []
     for thread in threads:
@@ -209,7 +241,10 @@ def parse_review_payload(payload: dict) -> ReviewStatus:
         bot_comments = [
             comment
             for comment in comments
-            if ((comment.get("author") or {}).get("login") in BOT_LOGINS)
+            if (
+                (comment.get("author") or {}).get("login") in BOT_LOGINS
+                and _is_after_threshold(comment.get("createdAt"), not_before)
+            )
         ]
         if not bot_comments:
             continue
@@ -228,9 +263,20 @@ def parse_review_payload(payload: dict) -> ReviewStatus:
     bot_issue_comments = [
         comment
         for comment in issue_comments
-        if ((comment.get("author") or {}).get("login") in BOT_LOGINS)
+        if (
+            (comment.get("author") or {}).get("login") in BOT_LOGINS
+            and _is_after_threshold(comment.get("createdAt"), not_before)
+        )
     ]
     latest_bot_comment = bot_issue_comments[-1]["body"] if bot_issue_comments else None
+    recent_bot_reviews = [
+        review
+        for review in reviews
+        if (
+            (review.get("author") or {}).get("login") in BOT_LOGINS
+            and _is_after_threshold(review.get("submittedAt"), not_before)
+        )
+    ]
 
     if actionable:
         return ReviewStatus(
@@ -244,6 +290,13 @@ def parse_review_payload(payload: dict) -> ReviewStatus:
             state="clean",
             actionable_comments=[],
             latest_bot_comment=latest_bot_comment,
+        )
+
+    if recent_bot_reviews:
+        return ReviewStatus(
+            state="clean",
+            actionable_comments=[],
+            latest_bot_comment=latest_bot_comment or recent_bot_reviews[-1].get("body"),
         )
 
     return ReviewStatus(

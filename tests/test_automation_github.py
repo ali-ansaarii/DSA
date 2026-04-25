@@ -35,6 +35,7 @@ class GitHubReviewParsingTests(unittest.TestCase):
                                 }
                             ]
                         },
+                        "reviews": {"nodes": []},
                     }
                 }
             }
@@ -68,6 +69,7 @@ class GitHubReviewParsingTests(unittest.TestCase):
                             ]
                         },
                         "comments": {"nodes": []},
+                        "reviews": {"nodes": []},
                     }
                 }
             }
@@ -76,6 +78,49 @@ class GitHubReviewParsingTests(unittest.TestCase):
         self.assertEqual(status.state, "actionable")
         self.assertEqual(len(status.actionable_comments), 1)
         self.assertEqual(status.actionable_comments[0].line, 42)
+
+    def test_stale_thread_is_ignored_after_new_review_request(self) -> None:
+        payload = {
+            "data": {
+                "repository": {
+                    "pullRequest": {
+                        "reviewThreads": {
+                            "nodes": [
+                                {
+                                    "isResolved": False,
+                                    "comments": {
+                                        "nodes": [
+                                            {
+                                                "author": {"login": "chatgpt-codex-connector"},
+                                                "body": "P2: old actionable comment",
+                                                "path": "sorting/Topic/Makefile",
+                                                "line": 10,
+                                                "url": "https://example.test/comment/3",
+                                                "createdAt": "2026-04-25T18:43:33Z",
+                                            }
+                                        ]
+                                    },
+                                }
+                            ]
+                        },
+                        "comments": {"nodes": []},
+                        "reviews": {
+                            "nodes": [
+                                {
+                                    "author": {"login": "chatgpt-codex-connector"},
+                                    "body": "Codex Review",
+                                    "submittedAt": "2026-04-25T18:55:00Z",
+                                    "state": "COMMENTED",
+                                }
+                            ]
+                        },
+                    }
+                }
+            }
+        }
+        status = parse_review_payload(payload, not_before="2026-04-25T18:51:50+00:00")
+        self.assertEqual(status.state, "clean")
+        self.assertEqual(status.actionable_comments, [])
 
 
 class GitHubReviewRequestTests(unittest.TestCase):
