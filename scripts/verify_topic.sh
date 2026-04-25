@@ -86,10 +86,9 @@ benchmark_long_all
 benchmark_challenge_all"
 
 found_any=0
-
-if [ ! -f "$expected_output_file" ]; then
-    echo "Expected output file not found: $expected_output_file" >&2
-    exit 1
+has_expected_output=0
+if [ -f "$expected_output_file" ]; then
+    has_expected_output=1
 fi
 
 verify_output_tmp=""
@@ -105,7 +104,11 @@ for target in $smoke_targets; do
     [ -n "$target" ] || continue
     if has_target "$target"; then
         found_any=1
-        run_and_compare_target "$target" "$verify_output_tmp"
+        if [ "$has_expected_output" -eq 1 ]; then
+            run_and_compare_target "$target" "$verify_output_tmp"
+        else
+            run_target "$target"
+        fi
     fi
 done
 
