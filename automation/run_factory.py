@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import argparse
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import sys
@@ -295,7 +295,7 @@ class AutomationRunner:
         entered_wait_at = _state_entered_at(progress, state.STATE_REVIEW_WAITING)
         latest_review_request_at = _latest_step_timestamp(progress, "request_review")
         if entered_wait_at is None:
-            entered_wait_at = datetime.now(tz=UTC)
+            entered_wait_at = datetime.now(tz=timezone.utc)
 
         while True:
             status = github.fetch_review_status(
@@ -307,7 +307,7 @@ class AutomationRunner:
                 self.paths.review_log_path,
                 json.dumps(
                     {
-                        "observed_at": datetime.now(tz=UTC).isoformat(timespec="seconds"),
+                        "observed_at": datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
                         "state": status.state,
                         "latest_bot_comment": status.latest_bot_comment,
                         "actionable_count": len(status.actionable_comments),
@@ -347,7 +347,7 @@ class AutomationRunner:
                 )
                 return
 
-            elapsed = datetime.now(tz=UTC) - entered_wait_at
+            elapsed = datetime.now(tz=timezone.utc) - entered_wait_at
             if elapsed.total_seconds() >= self.args.review_timeout_seconds:
                 raise RuntimeError("timed out waiting for a decisive review result")
             time.sleep(self.args.poll_interval_seconds)

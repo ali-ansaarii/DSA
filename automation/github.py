@@ -46,7 +46,7 @@ def _is_after_threshold(value: str | None, threshold: str | None) -> bool:
     boundary = _parse_timestamp(threshold)
     if observed is None or boundary is None:
         return False
-    return observed > boundary
+    return observed >= boundary
 
 
 def _load_env_defaults(env_path: Path) -> None:

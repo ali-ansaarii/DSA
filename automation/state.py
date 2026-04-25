@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 from typing import Any
@@ -113,7 +113,7 @@ ALLOWED_TRANSITIONS = {
 
 
 def utc_now() -> str:
-    return datetime.now(tz=UTC).isoformat(timespec="seconds")
+    return datetime.now(tz=timezone.utc).isoformat(timespec="seconds")
 
 
 @dataclass

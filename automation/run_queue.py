@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 import json
 import shutil
 from pathlib import Path
@@ -188,7 +188,7 @@ class QueueRunner:
             limit=self.args.limit,
         )
         summary = {
-            "started_at": datetime.now(tz=UTC).isoformat(timespec="seconds"),
+            "started_at": datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
             "base_branch": self.args.base_branch,
             "catalog": str(self.catalog_path),
             "local_root": str(self.local_root),
@@ -199,20 +199,19 @@ class QueueRunner:
         self._write_summary(summary)
 
         if self.args.dry_run:
-            summary["completed_at"] = datetime.now(tz=UTC).isoformat(timespec="seconds")
+            summary["completed_at"] = datetime.now(tz=timezone.utc).isoformat(timespec="seconds")
             self._write_summary(summary)
             return 0
 
         for entry in plan:
             if entry.status != "runnable":
                 continue
-            git_ops.pull_base_ff_only(self.repo_root, self.args.base_branch)
             spec = self.catalog_specs_by_label[entry.label]
             result = self._run_single_algorithm(spec)
             summary["results"].append(result)
             self._write_summary(summary)
 
-        summary["completed_at"] = datetime.now(tz=UTC).isoformat(timespec="seconds")
+        summary["completed_at"] = datetime.now(tz=timezone.utc).isoformat(timespec="seconds")
         self._write_summary(summary)
         return 0
 
@@ -236,8 +235,9 @@ class QueueRunner:
             "algorithm": spec.algorithm_name,
             "branch": spec.branch_name,
             "worktree": str(worktree_path),
-            "started_at": datetime.now(tz=UTC).isoformat(timespec="seconds"),
+            "started_at": datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
         }
+        git_ops.pull_base_ff_only(self.repo_root, self.args.base_branch)
         git_ops.add_detached_worktree(self.repo_root, worktree_path, self.args.base_branch)
         try:
             command = [
@@ -290,7 +290,7 @@ class QueueRunner:
                 except CommandError as exc:
                     result_payload["remote_branch_cleanup_error"] = str(exc)
 
-        result_payload["completed_at"] = datetime.now(tz=UTC).isoformat(timespec="seconds")
+        result_payload["completed_at"] = datetime.now(tz=timezone.utc).isoformat(timespec="seconds")
         return result_payload
 
     def _load_run_state(self, run_id: str) -> str:
@@ -312,7 +312,7 @@ class QueueRunner:
 
 
 def _utc_stamp() -> str:
-    return datetime.now(tz=UTC).strftime("%Y%m%dT%H%M%SZ")
+    return datetime.now(tz=timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
 def build_parser() -> argparse.ArgumentParser:

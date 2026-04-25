@@ -77,15 +77,12 @@ class QueuePlanTests(unittest.TestCase):
 
 
 class QueueRunnerBehaviorTests(unittest.TestCase):
-    def test_run_refreshes_base_branch_before_each_runnable_entry(self) -> None:
+    def test_run_single_algorithm_refreshes_base_branch_before_worktree(self) -> None:
         with TemporaryDirectory() as temp_dir:
             repo_root = Path(temp_dir)
             local_root = repo_root / ".local"
             local_root.mkdir()
-            (local_root / "ALGORITHM_CHECKLIST.md").write_text(
-                "- [ ] Merge Sort\n- [ ] Quick Sort\n",
-                encoding="utf-8",
-            )
+            (local_root / "ALGORITHM_CHECKLIST.md").write_text("- [ ] Merge Sort\n", encoding="utf-8")
             catalog_path = repo_root / "catalog.json"
             catalog_path.write_text(
                 json.dumps(
@@ -100,16 +97,6 @@ class QueueRunnerBehaviorTests(unittest.TestCase):
                             "branch_name": "merge-sort",
                             "pr_title": "Add Merge Sort",
                         },
-                        "Quick Sort": {
-                            "checklist_label": "Quick Sort",
-                            "topic_path": "sorting/QuickSort",
-                            "display_name": "Quick Sort",
-                            "algo_id": "QuickSort",
-                            "binary_name": "quick-sort",
-                            "time_flag": "time-quick-sort",
-                            "branch_name": "quick-sort",
-                            "pr_title": "Add Quick Sort",
-                        },
                     }
                 ),
                 encoding="utf-8",
@@ -118,7 +105,7 @@ class QueueRunnerBehaviorTests(unittest.TestCase):
                 catalog=str(catalog_path),
                 base_branch="main",
                 local_root=str(local_root),
-                limit=2,
+                limit=1,
                 dry_run=False,
                 stop_after=None,
                 max_verification_fixes=3,
@@ -131,23 +118,22 @@ class QueueRunnerBehaviorTests(unittest.TestCase):
             runner.catalog_specs_by_label = specs.load_catalog_specs_by_label(catalog_path)
 
             with (
-                patch("automation.run_queue.git_ops.ensure_clean_base_branch"),
-                patch("automation.run_queue.git_ops.list_local_branches", return_value=set()),
-                patch("automation.run_queue.git_ops.list_remote_branches", return_value=set()),
                 patch("automation.run_queue.git_ops.pull_base_ff_only") as pull_mock,
-                patch.object(QueueRunner, "_load_existing_run_states", return_value={}),
-                patch.object(
-                    QueueRunner,
-                    "_run_single_algorithm",
-                    side_effect=[
-                        {"algorithm": "Merge Sort", "final_state": state.STATE_DONE, "outcome": "success"},
-                        {"algorithm": "Quick Sort", "final_state": state.STATE_DONE, "outcome": "success"},
-                    ],
-                ),
+                patch("automation.run_queue.git_ops.add_detached_worktree"),
+                patch("automation.run_queue.run_command") as run_command_mock,
+                patch.object(QueueRunner, "_load_run_state", return_value=state.STATE_DONE),
+                patch("automation.run_queue.git_ops.remove_worktree"),
+                patch("automation.run_queue.shutil.rmtree"),
+                patch("automation.run_queue.git_ops.delete_local_branch"),
+                patch("automation.run_queue.git_ops.delete_remote_branch"),
             ):
-                runner.run()
+                run_command_mock.return_value.returncode = 0
+                run_command_mock.return_value.stdout = ""
+                run_command_mock.return_value.stderr = ""
+                result = runner._run_single_algorithm(runner.catalog_specs_by_label["Merge Sort"])
 
-            self.assertEqual(pull_mock.call_count, 2)
+            self.assertEqual(result["final_state"], state.STATE_DONE)
+            pull_mock.assert_called_once_with(repo_root, "main")
 
 
 if __name__ == "__main__":
