@@ -21,12 +21,28 @@ def current_commit(repo_root: Path) -> str:
     return result.stdout.strip()
 
 
+def resolve_ref_commit(repo_root: Path, ref_name: str) -> str:
+    result = run_command(
+        ["git", "rev-parse", ref_name],
+        cwd=repo_root,
+    )
+    return result.stdout.strip()
+
+
 def ensure_clean_base_branch(repo_root: Path, base_branch: str) -> None:
     branch = current_branch(repo_root)
     if branch != base_branch:
-        raise RuntimeError(
-            f"automation must start from {base_branch}, found branch: {branch}"
-        )
+        if branch:
+            raise RuntimeError(
+                f"automation must start from {base_branch}, found branch: {branch}"
+            )
+        current = current_commit(repo_root)
+        expected = resolve_ref_commit(repo_root, base_branch)
+        if current != expected:
+            raise RuntimeError(
+                "automation must start from the base branch tip or a detached worktree at "
+                f"that exact commit; expected {base_branch}@{expected}, found {current}"
+            )
     result = run_command(
         ["git", "status", "--porcelain"],
         cwd=repo_root,
