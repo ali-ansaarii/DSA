@@ -33,14 +33,21 @@ class ModelCallResult:
 def load_env_defaults(env_path: Path) -> None:
     if not env_path.exists():
         return
+    non_comment_lines: list[str] = []
     for raw_line in env_path.read_text(encoding="utf-8").splitlines():
         line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
+        if not line or line.startswith("#"):
+            continue
+        non_comment_lines.append(line)
+        if "=" not in line:
             continue
         key, value = line.split("=", 1)
         key = key.strip()
         if key and key not in os.environ:
             os.environ[key] = value.strip().strip("\"'")
+
+    if "OPENAI_API_KEY" not in os.environ and len(non_comment_lines) == 1 and "=" not in non_comment_lines[0]:
+        os.environ["OPENAI_API_KEY"] = non_comment_lines[0]
 
 
 def collect_topic_files(topic_dir: Path) -> list[tuple[str, str]]:
