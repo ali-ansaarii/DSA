@@ -35,6 +35,8 @@ def build_queue_plan(
     *,
     available_run_ids: dict[str, str],
     existing_run_states: dict[str, str],
+    existing_local_branches: set[str],
+    existing_remote_branches: set[str],
     limit: int | None = None,
 ) -> list[QueuePlanEntry]:
     plan: list[QueuePlanEntry] = []
@@ -99,6 +101,28 @@ def build_queue_plan(
                 )
             continue
 
+        if run_id in existing_local_branches:
+            plan.append(
+                QueuePlanEntry(
+                    label=label,
+                    run_id=run_id,
+                    status="blocked_local_branch",
+                    reason=f"local branch {run_id} already exists without a matching active run state",
+                )
+            )
+            continue
+
+        if run_id in existing_remote_branches:
+            plan.append(
+                QueuePlanEntry(
+                    label=label,
+                    run_id=run_id,
+                    status="blocked_remote_branch",
+                    reason=f"remote branch {run_id} already exists on origin without a matching active run state",
+                )
+            )
+            continue
+
         if limit is not None and runnable_count >= limit:
             plan.append(
                 QueuePlanEntry(
@@ -153,10 +177,14 @@ class QueueRunner:
             for label, spec in self.catalog_specs_by_label.items()
         }
         existing_run_states = self._load_existing_run_states()
+        existing_local_branches = git_ops.list_local_branches(self.repo_root)
+        existing_remote_branches = git_ops.list_remote_branches(self.repo_root)
         plan = build_queue_plan(
             pending_labels,
             available_run_ids=available_run_ids,
             existing_run_states=existing_run_states,
+            existing_local_branches=existing_local_branches,
+            existing_remote_branches=existing_remote_branches,
             limit=self.args.limit,
         )
         summary = {

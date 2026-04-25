@@ -20,6 +20,8 @@ class QueuePlanTests(unittest.TestCase):
                 "trie": state.STATE_MANUAL_ATTENTION,
                 "selection-sort": state.STATE_DONE,
             },
+            existing_local_branches=set(),
+            existing_remote_branches=set(),
             limit=1,
         )
         self.assertEqual(
@@ -42,11 +44,29 @@ class QueuePlanTests(unittest.TestCase):
                 "Merge Sort": "merge-sort",
             },
             existing_run_states={},
+            existing_local_branches=set(),
+            existing_remote_branches=set(),
             limit=1,
         )
         self.assertEqual(plan[0].status, "runnable")
         self.assertEqual(plan[1].status, "covered_by_alias")
         self.assertEqual(plan[2].status, "deferred_by_limit")
+
+    def test_build_queue_plan_blocks_stale_local_and_remote_branches(self) -> None:
+        pending = ["KMP", "Merge Sort"]
+        plan = build_queue_plan(
+            pending,
+            available_run_ids={
+                "KMP": "kmp",
+                "Merge Sort": "merge-sort",
+            },
+            existing_run_states={},
+            existing_local_branches={"kmp"},
+            existing_remote_branches={"merge-sort"},
+            limit=2,
+        )
+        self.assertEqual(plan[0].status, "blocked_local_branch")
+        self.assertEqual(plan[1].status, "blocked_remote_branch")
 
 
 if __name__ == "__main__":

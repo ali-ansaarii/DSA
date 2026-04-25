@@ -113,6 +113,31 @@ def delete_local_branch(repo_root: Path, branch_name: str) -> None:
     )
 
 
+def list_local_branches(repo_root: Path) -> set[str]:
+    result = run_command(
+        ["git", "for-each-ref", "--format=%(refname:short)", "refs/heads"],
+        cwd=repo_root,
+    )
+    return {line.strip() for line in result.stdout.splitlines() if line.strip()}
+
+
+def list_remote_branches(repo_root: Path, remote_name: str = "origin") -> set[str]:
+    result = run_command(
+        ["git", "ls-remote", "--heads", remote_name],
+        cwd=repo_root,
+    )
+    branches: set[str] = set()
+    for line in result.stdout.splitlines():
+        parts = line.split()
+        if len(parts) != 2:
+            continue
+        ref = parts[1].strip()
+        prefix = "refs/heads/"
+        if ref.startswith(prefix):
+            branches.add(ref[len(prefix):])
+    return branches
+
+
 def add_detached_worktree(repo_root: Path, worktree_path: Path, start_point: str) -> None:
     run_command(
         [
