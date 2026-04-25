@@ -166,6 +166,8 @@ USAGE_TEMPLATE = Template(
 ## Available Inputs
 - `inputs/input.txt`
   - small default correctness case
+- `inputs/expected_output.txt`
+  - exact expected output for `inputs/input.txt`, used by `scripts/verify_topic.sh`
 - `inputs/input_large.txt`
   - long general benchmark input
 - `inputs/input_challenge.txt`
@@ -432,6 +434,10 @@ def validate_algo_id(algo_id: str) -> str:
     algo_path = Path(algo_id)
     if algo_path.name != algo_id or ".." in algo_path.parts:
         raise SystemExit("algo-id must be a single path-safe filename stem")
+    if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", algo_id):
+        raise SystemExit(
+            "algo-id must be an identifier-safe stem matching [A-Za-z_][A-Za-z0-9_]*"
+        )
     return algo_id
 
 
@@ -478,6 +484,10 @@ def main() -> int:
         "rust/Cargo.toml": RUST_CARGO_TEMPLATE.substitute(substitutions),
         f"rust/src/{rust_module}.rs": RUST_MODULE_TEMPLATE.substitute(substitutions),
         "rust/src/main.rs": RUST_MAIN_TEMPLATE.substitute(substitutions),
+        "inputs/input.txt": "TODO\n",
+        "inputs/expected_output.txt": "TODO\n",
+        "inputs/input_large.txt": "TODO\n",
+        "inputs/input_challenge.txt": "TODO\n",
     }
 
     for relative_path, content in files.items():

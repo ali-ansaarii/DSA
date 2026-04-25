@@ -44,6 +44,8 @@ if [ ! -f "$makefile" ]; then
     exit 1
 fi
 
+expected_output_file="$topic_dir/inputs/expected_output.txt"
+
 has_target() {
     grep -Eq "^$1:" "$makefile"
 }
@@ -52,6 +54,17 @@ run_target() {
     target="$1"
     printf '\n[verify] %s -> %s\n' "$topic_dir" "$target"
     make -C "$topic_dir" "$target"
+}
+
+run_and_compare_target() {
+    target="$1"
+    actual_output_file="$2"
+    printf '\n[verify] %s -> %s\n' "$topic_dir" "$target"
+    make -s -C "$topic_dir" "$target" >"$actual_output_file"
+    if ! diff -u "$expected_output_file" "$actual_output_file"; then
+        echo "[verify] output mismatch for $target" >&2
+        exit 1
+    fi
 }
 
 if [ -n "$explicit_targets" ]; then
@@ -74,11 +87,25 @@ benchmark_challenge_all"
 
 found_any=0
 
+if [ ! -f "$expected_output_file" ]; then
+    echo "Expected output file not found: $expected_output_file" >&2
+    exit 1
+fi
+
+verify_output_tmp=""
+cleanup() {
+    if [ -n "$verify_output_tmp" ] && [ -f "$verify_output_tmp" ]; then
+        rm -f "$verify_output_tmp"
+    fi
+}
+trap cleanup EXIT HUP INT TERM
+verify_output_tmp="$(mktemp)"
+
 for target in $smoke_targets; do
     [ -n "$target" ] || continue
     if has_target "$target"; then
         found_any=1
-        run_target "$target"
+        run_and_compare_target "$target" "$verify_output_tmp"
     fi
 done
 
