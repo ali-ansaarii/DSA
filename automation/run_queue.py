@@ -277,6 +277,17 @@ class QueueRunner:
             except CommandError as exc:
                 result_payload["worktree_remove_error"] = str(exc)
             shutil.rmtree(worktree_path, ignore_errors=True)
+            final_state = result_payload.get("final_state")
+            if final_state == state.STATE_DONE:
+                branch_name = spec.branch_name
+                try:
+                    git_ops.delete_local_branch(self.repo_root, branch_name)
+                except CommandError as exc:
+                    result_payload["local_branch_cleanup_error"] = str(exc)
+                try:
+                    git_ops.delete_remote_branch(self.repo_root, branch_name)
+                except CommandError as exc:
+                    result_payload["remote_branch_cleanup_error"] = str(exc)
 
         result_payload["completed_at"] = datetime.now(tz=UTC).isoformat(timespec="seconds")
         return result_payload

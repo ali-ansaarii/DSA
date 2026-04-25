@@ -154,11 +154,11 @@ def request_codex_review(repo_root: Path, pr_number: int) -> None:
     )
 
 
-def merge_pr(repo_root: Path, pr_number: int) -> None:
-    run_command(
-        ["gh", "pr", "merge", str(pr_number), "--squash", "--delete-branch"],
-        cwd=repo_root,
-    )
+def merge_pr(repo_root: Path, pr_number: int, *, delete_branch: bool = True) -> None:
+    command = ["gh", "pr", "merge", str(pr_number), "--squash"]
+    if delete_branch:
+        command.append("--delete-branch")
+    run_command(command, cwd=repo_root)
 
 
 def fetch_review_status(

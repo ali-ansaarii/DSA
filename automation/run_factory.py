@@ -371,7 +371,11 @@ class AutomationRunner:
     def _merge_pr(self) -> None:
         self._ensure_run_branch_checked_out()
         assert self.snapshot.pr_number is not None
-        github.merge_pr(self.repo_root, self.snapshot.pr_number)
+        github.merge_pr(
+            self.repo_root,
+            self.snapshot.pr_number,
+            delete_branch=not self.args.ephemeral_worktree,
+        )
         if not self.args.ephemeral_worktree:
             git_ops.checkout_base_branch(self.repo_root, self.args.base_branch)
             git_ops.pull_base_ff_only(self.repo_root, self.args.base_branch)

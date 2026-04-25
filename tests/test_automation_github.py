@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, patch
 from automation.github import (
     BOT_LOGINS,
     get_review_token,
+    merge_pr,
     parse_review_payload,
     request_codex_review,
 )
@@ -165,6 +166,28 @@ class GitHubReviewRequestTests(unittest.TestCase):
         )
         self.assertEqual(req.get_method(), "POST")
         self.assertEqual(req.headers["Authorization"], "token gh-token")
+
+    @patch("automation.github.run_command")
+    def test_merge_pr_omits_delete_branch_when_requested(
+        self,
+        run_command_mock: MagicMock,
+    ) -> None:
+        merge_pr(Path("/tmp/repo"), 28, delete_branch=False)
+        run_command_mock.assert_called_once_with(
+            ["gh", "pr", "merge", "28", "--squash"],
+            cwd=Path("/tmp/repo"),
+        )
+
+    @patch("automation.github.run_command")
+    def test_merge_pr_deletes_branch_by_default(
+        self,
+        run_command_mock: MagicMock,
+    ) -> None:
+        merge_pr(Path("/tmp/repo"), 28)
+        run_command_mock.assert_called_once_with(
+            ["gh", "pr", "merge", "28", "--squash", "--delete-branch"],
+            cwd=Path("/tmp/repo"),
+        )
 
 
 if __name__ == "__main__":

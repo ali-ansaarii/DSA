@@ -113,6 +113,13 @@ def delete_local_branch(repo_root: Path, branch_name: str) -> None:
     )
 
 
+def delete_remote_branch(repo_root: Path, branch_name: str, remote_name: str = "origin") -> None:
+    run_command(
+        ["git", "push", remote_name, "--delete", branch_name],
+        cwd=repo_root,
+    )
+
+
 def list_local_branches(repo_root: Path) -> set[str]:
     result = run_command(
         ["git", "for-each-ref", "--format=%(refname:short)", "refs/heads"],
