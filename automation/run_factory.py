@@ -501,9 +501,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no-benchmarks", action="store_true")
     parser.add_argument("--base-branch", default="main")
     parser.add_argument("--stop-after", choices=sorted(state.ALLOWED_TRANSITIONS))
-    parser.add_argument("--max-verification-fixes", type=int, default=2)
+    parser.add_argument("--max-verification-fixes", type=int, default=3)
     parser.add_argument("--max-review-fixes", type=int, default=3)
-    parser.add_argument("--poll-interval-seconds", type=int, default=60)
+    parser.add_argument("--poll-interval-seconds", type=int, default=120)
     parser.add_argument("--review-timeout-seconds", type=int, default=1800)
     return parser
 

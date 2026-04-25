@@ -311,17 +311,32 @@ These rules should be enforced in code.
 
 ### Suggested Limits
 - max local generation attempts per algorithm: `2`
-- max verification-fix attempts before PR: `2`
+- max verification-fix attempts before PR: `3`
 - max review-fix loops per PR: `3`
 - max total automation attempts per algorithm before manual stop: `5`
+
+### Review-Fix Bound
+- A PR may receive at most `3` automation-driven review-fix rounds.
+- If the PR still has actionable review feedback after the third fix round, it
+  must not be merged automatically.
+- In that case the run must be moved to `manual_attention` and kept out of the
+  success path.
 
 ### Escalate To `manual_attention` When
 - local verification still fails after bounded retries
 - review comments are ambiguous or contradictory
+- review comments remain actionable after `3` automation fix rounds
 - toolchain is missing
 - branch/merge state is inconsistent
 - checklist parsing fails
 - PR creation or merge policy cannot be completed safely
+
+### Queue Continuation Policy
+- In single-algorithm Phase B, `manual_attention` ends the run.
+- In later queue-based phases, `manual_attention` on one algorithm must not stop
+  the entire automation campaign.
+- A blocked algorithm should be recorded, skipped, and left for human review
+  while the controller proceeds to the next unchecked checklist item.
 
 ## Logging And Auditability
 Each run should persist:
@@ -631,7 +646,7 @@ The following decisions are now fixed for the first implementation.
 - Any unresolved actionable comment should trigger the bounded review-fix loop.
 
 ### Review Polling Policy
-- Poll every 60 seconds while waiting for review.
+- Poll every 120 seconds while waiting for review.
 - Escalate to `manual_attention` after 30 minutes without a decisive review
   result.
 - A decisive result means either:
