@@ -43,8 +43,18 @@ def run_command(
     )
     if check and completed.returncode != 0:
         command_text = " ".join(args)
+        stderr = completed.stderr.strip()
+        stdout = completed.stdout.strip()
+        detail = stderr or stdout
+        if detail:
+            message = (
+                f"command failed with exit code {completed.returncode}: "
+                f"{command_text}\n{detail}"
+            )
+        else:
+            message = f"command failed with exit code {completed.returncode}: {command_text}"
         raise CommandError(
-            f"command failed with exit code {completed.returncode}: {command_text}",
+            message,
             result,
         )
     return result
