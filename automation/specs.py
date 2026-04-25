@@ -33,6 +33,7 @@ class AlgorithmSpec:
     pr_title: str
     prompt_notes: str = ""
     benchmark_expected: bool = True
+    design_status: str = "ready"
 
     @property
     def topic_dir_name(self) -> str:
@@ -77,6 +78,7 @@ class AlgorithmSpec:
             pr_title=pr_title,
             prompt_notes=mapping.get("prompt_notes", ""),
             benchmark_expected=bool(mapping.get("benchmark_expected", True)),
+            design_status=str(mapping.get("design_status", "ready")),
         )
 
 

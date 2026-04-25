@@ -34,6 +34,7 @@ def build_queue_plan(
     pending_labels: Iterable[str],
     *,
     available_run_ids: dict[str, str],
+    run_design_statuses: dict[str, str],
     existing_run_states: dict[str, str],
     existing_local_branches: set[str],
     existing_remote_branches: set[str],
@@ -69,6 +70,18 @@ def build_queue_plan(
             )
             continue
         first_label_by_run_id[run_id] = label
+
+        design_status = run_design_statuses.get(run_id, "ready")
+        if design_status != "ready":
+            plan.append(
+                QueuePlanEntry(
+                    label=label,
+                    run_id=run_id,
+                    status="blocked_design_not_ready",
+                    reason=f"catalog design_status is {design_status}",
+                )
+            )
+            continue
 
         existing_state = existing_run_states.get(run_id)
         if existing_state is not None:
@@ -180,12 +193,17 @@ class QueueRunner:
             label: spec.run_id
             for label, spec in self.catalog_specs_by_label.items()
         }
+        run_design_statuses = {
+            spec.run_id: spec.design_status
+            for spec in self.catalog_specs.values()
+        }
         existing_run_states = self._load_existing_run_states()
         existing_local_branches = git_ops.list_local_branches(self.repo_root)
         existing_remote_branches = git_ops.list_remote_branches(self.repo_root)
         plan = build_queue_plan(
             pending_labels,
             available_run_ids=available_run_ids,
+            run_design_statuses=run_design_statuses,
             existing_run_states=existing_run_states,
             existing_local_branches=existing_local_branches,
             existing_remote_branches=existing_remote_branches,
