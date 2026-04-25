@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import os
 from pathlib import Path
 import re
+from urllib import request
 
 from automation.shell import run_command
 
@@ -27,6 +29,31 @@ class ReviewStatus:
     state: str
     actionable_comments: list[ReviewComment]
     latest_bot_comment: str | None
+
+
+def _load_env_defaults(env_path: Path) -> None:
+    if not env_path.exists():
+        return
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        separator = None
+        if "=" in line:
+            separator = "="
+        elif ":" in line:
+            separator = ":"
+        if separator is None:
+            continue
+        key, value = line.split(separator, 1)
+        key = key.strip()
+        if key and key not in os.environ:
+            os.environ[key] = value.strip().strip("\"'")
+
+
+def get_review_token(repo_root: Path) -> str | None:
+    _load_env_defaults(repo_root / ".env")
+    return os.environ.get("GITHUB_REVIEW_TOKEN") or os.environ.get("GH_TOKEN")
 
 
 def parse_remote_owner_repo(repo_root: Path) -> tuple[str, str]:
@@ -80,6 +107,29 @@ def create_pr(
 
 
 def request_codex_review(repo_root: Path, pr_number: int) -> None:
+    token = get_review_token(repo_root)
+    if token:
+        owner, repo = parse_remote_owner_repo(repo_root)
+        payload = json.dumps({"body": "@codex review"}).encode("utf-8")
+        req = request.Request(
+            f"https://api.github.com/repos/{owner}/{repo}/issues/{pr_number}/comments",
+            data=payload,
+            headers={
+                "Authorization": f"token {token}",
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28",
+                "User-Agent": "dsa-automation-review-request",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        with request.urlopen(req, timeout=20) as response:
+            if response.status != 201:
+                raise RuntimeError(
+                    f"unexpected GitHub comment response status: {response.status}"
+                )
+        return
+
     run_command(
         ["gh", "pr", "comment", str(pr_number), "--body", "@codex review"],
         cwd=repo_root,
@@ -201,4 +251,3 @@ def parse_review_payload(payload: dict) -> ReviewStatus:
         actionable_comments=[],
         latest_bot_comment=latest_bot_comment,
     )
-
