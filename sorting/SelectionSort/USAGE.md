@@ -50,7 +50,7 @@ make benchmark_challenge
 ```
 
 ## Benchmark Scope
-The `benchmark_long_*` and `benchmark_challenge_*` targets run the complete program through `scripts/benchmark_with_memory.sh`, so the wrapper's wall-clock and memory measurements include process startup, input parsing, the Selection Sort call, and output. When `--time-selection-sort` is passed, each implementation also writes an `algorithm_time_ms=...` line to standard error that measures only the core Selection Sort function call after parsing and before output formatting.
+The `benchmark_long_*` and `benchmark_challenge_*` targets run the complete program through `scripts/benchmark_with_memory.sh`, so the wrapper's wall-clock and memory measurements include process startup, input parsing, the Selection Sort call, and output. When `--time-selection-sort` is passed, each implementation also writes an `algorithm_time_ms=...` line to standard error that measures only the core Selection Sort function call after parsing and before output formatting. The benchmark targets merge that timing line into the wrapper-captured standard output so it is visible in benchmark output.
 
 ## Expected Small-Input Output
 ```text
