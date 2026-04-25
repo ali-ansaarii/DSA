@@ -23,6 +23,11 @@ class QueuePlanTests(unittest.TestCase):
                 "Trie": "trie",
                 "Selection Sort": "selection-sort",
             },
+            run_design_statuses={
+                "kmp": "ready",
+                "trie": "ready",
+                "selection-sort": "ready",
+            },
             existing_run_states={
                 "trie": state.STATE_MANUAL_ATTENTION,
                 "selection-sort": state.STATE_DONE,
@@ -50,6 +55,10 @@ class QueuePlanTests(unittest.TestCase):
                 "KMP Prefix Function": "kmp",
                 "Merge Sort": "merge-sort",
             },
+            run_design_statuses={
+                "kmp": "ready",
+                "merge-sort": "ready",
+            },
             existing_run_states={},
             existing_local_branches=set(),
             existing_remote_branches=set(),
@@ -67,6 +76,10 @@ class QueuePlanTests(unittest.TestCase):
                 "KMP": "kmp",
                 "Merge Sort": "merge-sort",
             },
+            run_design_statuses={
+                "kmp": "ready",
+                "merge-sort": "ready",
+            },
             existing_run_states={},
             existing_local_branches={"kmp"},
             existing_remote_branches={"merge-sort"},
@@ -74,6 +87,26 @@ class QueuePlanTests(unittest.TestCase):
         )
         self.assertEqual(plan[0].status, "blocked_local_branch")
         self.assertEqual(plan[1].status, "blocked_remote_branch")
+
+    def test_build_queue_plan_blocks_non_ready_design_entries(self) -> None:
+        pending = ["Manacher", "KMP"]
+        plan = build_queue_plan(
+            pending,
+            available_run_ids={
+                "Manacher": "manacher",
+                "KMP": "kmp",
+            },
+            run_design_statuses={
+                "manacher": "needs_prompt_refinement",
+                "kmp": "ready",
+            },
+            existing_run_states={},
+            existing_local_branches=set(),
+            existing_remote_branches=set(),
+            limit=2,
+        )
+        self.assertEqual(plan[0].status, "blocked_design_not_ready")
+        self.assertEqual(plan[1].status, "runnable")
 
 
 class QueueRunnerBehaviorTests(unittest.TestCase):
