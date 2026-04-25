@@ -130,7 +130,7 @@ class AutomationRunner:
         return self.model_client
 
     def _create_branch(self) -> None:
-        git_ops.ensure_clean_main(self.repo_root)
+        git_ops.ensure_clean_base_branch(self.repo_root, self.args.base_branch)
         if not self._state_persisted:
             self.store.initialize(self.snapshot)
             self.store.append_summary(f"initialized run for {self.spec.algorithm_name}")
@@ -262,7 +262,7 @@ class AutomationRunner:
             self.repo_root,
             title=self.spec.pr_title,
             body=body,
-            base="main",
+            base=self.args.base_branch,
             head=self.spec.branch_name,
         )
         self.snapshot.pr_number = pr_number
@@ -365,8 +365,8 @@ class AutomationRunner:
         self._ensure_run_branch_checked_out()
         assert self.snapshot.pr_number is not None
         github.merge_pr(self.repo_root, self.snapshot.pr_number)
-        git_ops.checkout_main(self.repo_root)
-        git_ops.pull_main_ff_only(self.repo_root)
+        git_ops.checkout_base_branch(self.repo_root, self.args.base_branch)
+        git_ops.pull_base_ff_only(self.repo_root, self.args.base_branch)
         try:
             git_ops.delete_local_branch(self.repo_root, self.spec.branch_name)
         except Exception:
@@ -377,7 +377,7 @@ class AutomationRunner:
             next_state=state.STATE_MERGED,
             evidence={
                 "pr_number": self.snapshot.pr_number,
-                "main_commit": git_ops.current_commit(self.repo_root),
+                "base_commit": git_ops.current_commit(self.repo_root),
             },
             note=f"merged PR #{self.snapshot.pr_number}",
         )
@@ -499,6 +499,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--checklist-label")
     parser.add_argument("--prompt-notes")
     parser.add_argument("--no-benchmarks", action="store_true")
+    parser.add_argument("--base-branch", default="main")
     parser.add_argument("--stop-after", choices=sorted(state.ALLOWED_TRANSITIONS))
     parser.add_argument("--max-verification-fixes", type=int, default=2)
     parser.add_argument("--max-review-fixes", type=int, default=3)
