@@ -11,6 +11,9 @@ from urllib import error, request
 from automation.specs import AlgorithmSpec
 
 
+SKIP_CONTEXT_DIR_NAMES = {"build", "target", "__pycache__", "logs"}
+
+
 @dataclass(frozen=True)
 class FileWrite:
     path: str
@@ -66,8 +69,14 @@ def collect_topic_files(topic_dir: Path) -> list[tuple[str, str]]:
     for path in sorted(topic_dir.rglob("*")):
         if path.is_dir():
             continue
+        if any(part in SKIP_CONTEXT_DIR_NAMES for part in path.relative_to(topic_dir).parts):
+            continue
         relative = path.relative_to(topic_dir).as_posix()
-        files.append((relative, path.read_text(encoding="utf-8")))
+        try:
+            content = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        files.append((relative, content))
     return files
 
 
