@@ -8,10 +8,11 @@ public final class Main {
     private Main() {}
 
     private static List<Trie.Operation> readOperations(Path inputPath) throws IOException {
-        List<String> tokens = List.of(Files.readString(inputPath).split("\\s+"));
-        if (tokens.isEmpty() || tokens.get(0).isEmpty()) {
+        String content = Files.readString(inputPath).trim();
+        if (content.isEmpty()) {
             throw new IllegalArgumentException("Input file is empty");
         }
+        List<String> tokens = List.of(content.split("\\s+"));
 
         int operationCount = Integer.parseInt(tokens.get(0));
         int expectedTokens = 1 + operationCount * 2;
