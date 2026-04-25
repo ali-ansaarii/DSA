@@ -15,6 +15,7 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from automation import checklist, git_ops, specs, state
+from automation import model as model_env
 from automation.shell import CommandError, run_command
 
 
@@ -129,6 +130,7 @@ class QueueRunner:
         self.local_root = Path(self.args.local_root).resolve()
         self.checklist_path = self.local_root / "ALGORITHM_CHECKLIST.md"
         self.catalog_path = (self.repo_root / self.args.catalog).resolve()
+        model_env.load_env_defaults(self.repo_root / ".env")
         self.catalog_specs = specs.load_catalog_specs(self.catalog_path)
         self.catalog_specs_by_label = specs.load_catalog_specs_by_label(self.catalog_path)
         self.queue_root = self.local_root / "automation_queue_runs"
