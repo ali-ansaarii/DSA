@@ -1,18 +1,12 @@
 # Matrix Multiplication
 
 ## What is Matrix Multiplication?
-Matrix multiplication combines an `m x n` matrix `A` with an `n x p` matrix `B` to produce an `m x p` matrix `C`, where each entry `C[i][j]` is the dot product of row `i` of `A` and column `j` of `B`. This family contains two implementations of the same dense-matrix operation: a classical triple-loop algorithm and a blocked algorithm that performs the same arithmetic in cache-friendlier tiles.
+Matrix multiplication combines an `m x n` matrix `A` with an `n x p` matrix `B` to produce an `m x p` matrix `C`, where each entry `C[i][j]` is the dot product of row `i` of `A` and column `j` of `B`. This topic implements the standard dense-matrix multiplication algorithm with a direct triple-loop computation.
 
 ## Problem in this folder
-Given two compatible dense integer matrices, compute their product exactly and print the resulting matrix. Both variants use the same input contract and produce byte-for-byte identical output for the same input.
+Given two compatible dense integer matrices, compute their product exactly and print the resulting matrix. All language implementations use the same input contract and produce byte-for-byte identical output for the same input.
 
 For build, run, and benchmark commands, see `USAGE.md`.
-
-## Variants in this family
-- `classical/` uses the direct `O(mnp)` triple-loop method.
-- `blocked/` uses the same `O(mnp)` arithmetic but groups iterations into square tiles to improve locality for large matrices.
-
-The blocked version is included for systems reasons, not because it solves a different mathematical problem. Dense matrix multiplication is a standard example where asymptotic complexity alone does not explain performance: a loop order or tiling strategy can reduce cache misses and memory traffic while computing the same result.
 
 ## Core idea
 For every output cell `(i, j)`, accumulate:
@@ -21,10 +15,10 @@ For every output cell `(i, j)`, accumulate:
 C[i][j] = sum(A[i][k] * B[k][j]) for k = 0..n-1
 ```
 
-The classical variant evaluates this directly. The blocked variant partitions the `i`, `k`, and `j` loops into fixed-size ranges and performs the same updates inside those ranges. Blocking preserves the invariant that every pairwise product `A[i][k] * B[k][j]` is added exactly once, but it tries to keep reused rows, columns, and partial sums closer to the CPU cache.
+The implementation evaluates this formula directly. It iterates over each row of the left matrix, each index in the shared dimension, and each column of the right matrix, adding every pairwise product `A[i][k] * B[k][j]` exactly once to the corresponding output cell.
 
 ## Input Format
-All variants and languages read the same dense-matrix file format:
+All languages read the same dense-matrix file format:
 
 ```text
 m n
@@ -54,10 +48,10 @@ C[m-1][0] ... C[m-1][p-1]
 ```
 
 ## Time Complexity
-Both variants perform `m * n * p` multiply-add operations, so the asymptotic time complexity is `O(mnp)`. For square `N x N` matrices, this is `O(N^3)`.
+The algorithm performs `m * n * p` multiply-add operations, so the time complexity is `O(mnp)`. For square `N x N` matrices, this is `O(N^3)`.
 
 ## Space Complexity
-Both variants allocate the output matrix, requiring `O(mp)` extra space beyond the input matrices. The blocked variant uses only constant additional loop/index storage beyond the output.
+The algorithm allocates the output matrix, requiring `O(mp)` extra space beyond the input matrices, plus constant additional loop/index storage.
 
 ## Why the challenge input is challenging
 `inputs/input_challenge.txt` multiplies a very wide `8 x 128` matrix by a tall `128 x 8` matrix. The result is small, but every output cell depends on a long dot product. This stresses accumulator correctness, rectangular-dimension handling, loop-bound edge cases, and cache behavior where repeatedly traversing the shared dimension dominates the work.
