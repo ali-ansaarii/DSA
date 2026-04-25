@@ -174,6 +174,7 @@ Responsibilities:
 - persist state per algorithm
 - persist logs
 - allow resume after interruption
+- persist a step-by-step progress manifest with timestamps and evidence links
 
 ### Prompt Layer
 Candidate directory:
@@ -327,6 +328,7 @@ Each run should persist:
 
 - chosen algorithm
 - branch name
+- current step and last completed step
 - prompts sent to the model
 - model outputs
 - verification commands and results
@@ -340,10 +342,43 @@ Suggested location:
 Suggested files:
 
 - `state.json`
+- `progress.json`
 - `generation.log`
 - `verification.log`
 - `review.log`
 - `summary.txt`
+
+### Progress Manifest
+The automation should maintain a machine-readable progress manifest per run:
+
+- `.local/automation_runs/<algorithm-id>/progress.json`
+
+This file should be append-friendly and reflect what actually happened, not
+what the controller hoped to do next.
+
+Each recorded step should include:
+
+- step name
+- state before
+- state after
+- start timestamp
+- end timestamp
+- outcome (`success`, `failure`, `skipped`)
+- evidence pointers
+  - relevant log file
+  - relevant commit hash if created
+  - relevant PR number if created
+- short human-readable note
+
+The purpose of `progress.json` is:
+
+- accurate resume behavior
+- accurate post-run summaries
+- easier debugging of partial or failed runs
+- a durable audit trail for unattended execution
+
+`state.json` remains the current snapshot of the run.
+`progress.json` becomes the chronological history of what happened.
 
 ## Branch And Commit Policy
 
@@ -472,6 +507,7 @@ This should only be attempted after the sequential system is stable.
 ### Phase B: Single-Algorithm MVP
 - [ ] Create an `automation/` package with a stable module layout
 - [ ] Implement run-state persistence under `.local/automation_runs/`
+- [ ] Implement progress-manifest recording under `.local/automation_runs/`
 - [ ] Implement checklist read support for a named algorithm
 - [ ] Implement branch creation from `main`
 - [ ] Implement scaffold invocation and validation
@@ -519,13 +555,14 @@ The MVP is acceptable only if all of the following pass on one real algorithm:
 
 1. Starting from a clean `main`, one command creates a new branch and scaffold.
 2. The run state is persisted before any irreversible step.
-3. Generated files are written only inside the intended topic scope.
-4. Local verification runs and its full output is captured in logs.
-5. On successful verification, the system commits, pushes, and opens exactly one PR.
-6. The PR receives exactly one review-request comment per review cycle.
-7. If review returns actionable comments, the system applies a bounded fix loop and re-verifies before pushing.
-8. If review returns clean, the system squash-merges and updates the local checklist.
-9. At the end, the run is marked `done` and the working tree returns to a clean `main`.
+3. The progress manifest records every completed transition with timestamps and evidence pointers.
+4. Generated files are written only inside the intended topic scope.
+5. Local verification runs and its full output is captured in logs.
+6. On successful verification, the system commits, pushes, and opens exactly one PR.
+7. The PR receives exactly one review-request comment per review cycle.
+8. If review returns actionable comments, the system applies a bounded fix loop and re-verifies before pushing.
+9. If review returns clean, the system squash-merges and updates the local checklist.
+10. At the end, the run is marked `done`, the working tree returns to a clean `main`, and the manifest history is sufficient to reconstruct the run.
 
 ### Phase C Acceptance: Resume And Recovery
 Resume and recovery are acceptable only if all of the following pass:
@@ -535,6 +572,7 @@ Resume and recovery are acceptable only if all of the following pass:
 3. Restarting while waiting for review does not post duplicate `@codex review` comments.
 4. Restarting after a clean merge does not try to merge again.
 5. Corrupted or contradictory state is detected and moved to `manual_attention`.
+6. The recorded manifest is sufficient to explain why the resumed run chose its next action.
 
 ### Phase D Acceptance: Checklist Queue
 Queue processing is acceptable only if all of the following pass:
