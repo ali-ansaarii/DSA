@@ -1,0 +1,17 @@
+16
+insert apple
+search apple
+search app
+starts_with app
+insert app
+search app
+insert apply
+starts_with appl
+search apply
+search apples
+starts_with banana
+insert banana
+starts_with ban
+search band
+insert band
+search band
