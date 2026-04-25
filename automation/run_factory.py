@@ -239,14 +239,14 @@ class AutomationRunner:
             git_ops.push_new_branch(self.repo_root, self.spec.branch_name)
         else:
             git_ops.push_current_branch(self.repo_root)
-        next_state = (
-            state.STATE_PR_OPEN if self.snapshot.pr_number is None else state.STATE_REVIEW_REQUESTED
-        )
         self.snapshot = self.store.transition(
             self.snapshot,
             step_name="push_topic",
-            next_state=next_state,
-            evidence={"branch": self.spec.branch_name},
+            next_state=state.STATE_PUSHED,
+            evidence={
+                "branch": self.spec.branch_name,
+                "pr_number": self.snapshot.pr_number,
+            },
             note="pushed branch to origin",
         )
 
