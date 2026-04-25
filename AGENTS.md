@@ -126,16 +126,27 @@ algorithm_name/
 - Reusable helper scripts should exit non-zero on real failures by default.
 - If a helper supports tolerated failures for educational or adversarial benchmarks, that should be an explicit opt-in mode.
 - Keep reusable helper script output human-readable and stable so it can be interpreted consistently across topics.
+- Prefer using `scripts/scaffold_topic.py` to create new single-topic scaffolds so folder structure, baseline Makefiles, and language skeletons stay consistent.
+- Prefer using `scripts/verify_topic.sh <topic-dir>` for standard smoke verification, and `scripts/verify_topic.sh <topic-dir> --benchmarks` when benchmark targets were added or changed.
 
 ## Commit Hygiene
 - Prefer small, logically separated commits when a topic evolves in stages.
 - When practical, split shared inputs, individual variant implementations, shared orchestration, and repo-wide hygiene updates into separate commits.
 
+## Scaling Strategy
+- When practical, batch related algorithms by family so inputs, docs structure, and runner patterns can be reused across several topics.
+- For substantial new families, prefer parallel lanes with disjoint ownership:
+  - docs, inputs, and Makefile
+  - C++ and Rust
+  - Python and Java
+
 ## Default Delivery Workflow
 - If the user gives only an algorithm name or a similarly short implementation request, treat that as a request to run the full delivery flow end to end.
 - Start by creating a dedicated branch from `main` for that algorithm before making code changes.
 - Implement the topic following this repository's structure and language expectations, including inputs, `PROBLEM.md`, `Makefile`, and all required language implementations unless the user narrows the scope.
+- When the topic is a standard single-topic layout, start from `scripts/scaffold_topic.py` unless there is a clear reason to do custom setup.
 - Follow the same build and verification discipline used in prior topics: prepare the required small/default, long/general, and challenging inputs when practical, add the expected run and benchmark targets, and run the relevant smoke tests before committing.
+- Prefer `scripts/verify_topic.sh` as the default verification entry point when the topic follows the standard target naming.
 - Before commit/push/PR creation, update the local checklist at `.local/ALGORITHM_CHECKLIST.md` to mark the newly added algorithm work. Do not recreate a tracked root `ALGORITHM_CHECKLIST.md`.
 - If verification succeeds, continue through the full publishing flow without waiting for an extra prompt: stage the intended files, create the appropriate commits, push the branch, and open a PR to `main`.
 - Use `gh pr create` for PR creation so the PR author matches the authenticated GitHub CLI account (`ali-ansaarii`) instead of any connector-linked account.
