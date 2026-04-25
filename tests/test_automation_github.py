@@ -104,7 +104,16 @@ class GitHubReviewParsingTests(unittest.TestCase):
                                 }
                             ]
                         },
-                        "comments": {"nodes": []},
+                        "comments": {
+                            "nodes": [
+                                {
+                                    "author": {"login": "chatgpt-codex-connector[bot]"},
+                                    "body": "Codex Review: Didn't find any major issues.",
+                                    "createdAt": "2026-04-25T18:55:00Z",
+                                    "url": "https://example.test/comment/4",
+                                }
+                            ]
+                        },
                         "reviews": {
                             "nodes": [
                                 {
@@ -148,6 +157,32 @@ class GitHubReviewParsingTests(unittest.TestCase):
         self.assertEqual(status.state, "actionable")
         self.assertEqual(len(status.actionable_comments), 1)
         self.assertIn("remaining concerns", status.actionable_comments[0].body)
+
+    def test_commented_bot_review_without_clean_signal_is_actionable(self) -> None:
+        payload = {
+            "data": {
+                "repository": {
+                    "pullRequest": {
+                        "reviewThreads": {"nodes": []},
+                        "comments": {"nodes": []},
+                        "reviews": {
+                            "nodes": [
+                                {
+                                    "author": {"login": "chatgpt-codex-connector"},
+                                    "body": "You still need to address the queue semantics issue.",
+                                    "submittedAt": "2026-04-25T19:00:00Z",
+                                    "state": "COMMENTED",
+                                }
+                            ]
+                        },
+                    }
+                }
+            }
+        }
+        status = parse_review_payload(payload)
+        self.assertEqual(status.state, "actionable")
+        self.assertEqual(len(status.actionable_comments), 1)
+        self.assertIn("queue semantics", status.actionable_comments[0].body)
 
 
 class GitHubReviewRequestTests(unittest.TestCase):

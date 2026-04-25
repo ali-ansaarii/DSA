@@ -556,7 +556,7 @@ This should only be attempted after the sequential system is stable.
 ### Phase D: Checklist Queue
 - [ ] Select the next unchecked item automatically
 - [ ] Process algorithms sequentially
-- [ ] Stop on first blocked algorithm
+- [ ] Record blocked algorithms and continue to the next runnable item
 - [ ] Record queue progress without corrupting checklist state
 
 ### Phase E: Family Batching
@@ -601,8 +601,9 @@ Queue processing is acceptable only if all of the following pass:
 
 1. The system picks the next unchecked algorithm deterministically.
 2. A successful merge updates the checklist exactly once.
-3. A blocked algorithm stops the queue and preserves logs and state for inspection.
-4. Subsequent algorithms are not started after a blocked item.
+3. A blocked algorithm is recorded with preserved logs and state for inspection.
+4. Subsequent runnable algorithms continue after a blocked item.
+5. Queue summaries make blocked items and their terminal states easy to audit after the run.
 
 ### Phase E Acceptance: Family Batching
 Batching is acceptable only if all of the following pass:

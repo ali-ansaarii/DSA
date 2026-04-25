@@ -135,6 +135,85 @@ class QueueRunnerBehaviorTests(unittest.TestCase):
             self.assertEqual(result["final_state"], state.STATE_DONE)
             pull_mock.assert_called_once_with(repo_root, "main")
 
+    def test_run_continues_after_blocked_result(self) -> None:
+        with TemporaryDirectory() as temp_dir:
+            repo_root = Path(temp_dir)
+            local_root = repo_root / ".local"
+            local_root.mkdir()
+            (local_root / "ALGORITHM_CHECKLIST.md").write_text(
+                "- [ ] Merge Sort\n- [ ] Quick Sort\n",
+                encoding="utf-8",
+            )
+            catalog_path = repo_root / "catalog.json"
+            catalog_path.write_text(
+                json.dumps(
+                    {
+                        "Merge Sort": {
+                            "checklist_label": "Merge Sort",
+                            "topic_path": "sorting/MergeSort",
+                            "display_name": "Merge Sort",
+                            "algo_id": "MergeSort",
+                            "binary_name": "merge-sort",
+                            "time_flag": "time-merge-sort",
+                            "branch_name": "merge-sort",
+                            "pr_title": "Add Merge Sort",
+                        },
+                        "Quick Sort": {
+                            "checklist_label": "Quick Sort",
+                            "topic_path": "sorting/QuickSort",
+                            "display_name": "Quick Sort",
+                            "algo_id": "QuickSort",
+                            "binary_name": "quick-sort",
+                            "time_flag": "time-quick-sort",
+                            "branch_name": "quick-sort",
+                            "pr_title": "Add Quick Sort",
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            args = argparse.Namespace(
+                catalog=str(catalog_path),
+                base_branch="main",
+                local_root=str(local_root),
+                limit=2,
+                dry_run=False,
+                stop_after=None,
+                max_verification_fixes=3,
+                max_review_fixes=3,
+                poll_interval_seconds=120,
+                review_timeout_seconds=1800,
+            )
+            runner = QueueRunner(repo_root, args)
+            runner.catalog_specs = specs.load_catalog_specs(catalog_path)
+            runner.catalog_specs_by_label = specs.load_catalog_specs_by_label(catalog_path)
+
+            with (
+                patch("automation.run_queue.git_ops.ensure_clean_base_branch"),
+                patch("automation.run_queue.git_ops.list_local_branches", return_value=set()),
+                patch("automation.run_queue.git_ops.list_remote_branches", return_value=set()),
+                patch.object(QueueRunner, "_load_existing_run_states", return_value={}),
+                patch.object(
+                    QueueRunner,
+                    "_run_single_algorithm",
+                    side_effect=[
+                        {
+                            "algorithm": "Merge Sort",
+                            "final_state": state.STATE_MANUAL_ATTENTION,
+                            "outcome": state.STATE_MANUAL_ATTENTION,
+                        },
+                        {
+                            "algorithm": "Quick Sort",
+                            "final_state": state.STATE_DONE,
+                            "outcome": "success",
+                        },
+                    ],
+                ) as run_single_mock,
+            ):
+                runner.run()
+
+            self.assertEqual(run_single_mock.call_count, 2)
+
 
 if __name__ == "__main__":
     unittest.main()

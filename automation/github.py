@@ -293,7 +293,7 @@ def parse_review_payload(payload: dict, *, not_before: str | None = None) -> Rev
             latest_bot_comment=latest_bot_comment,
         )
 
-    if latest_bot_review and latest_bot_review.get("state") in {"APPROVED", "COMMENTED"}:
+    if latest_bot_review and latest_bot_review.get("state") == "APPROVED":
         return ReviewStatus(
             state="clean",
             actionable_comments=[],
