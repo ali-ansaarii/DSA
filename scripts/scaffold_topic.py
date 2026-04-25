@@ -408,13 +408,30 @@ def render_plain_template(template: str, substitutions: dict[str, str]) -> str:
     return rendered
 
 
-def sanitize_rust_module_name(binary_name: str) -> str:
-    sanitized = re.sub(r"[^A-Za-z0-9_]", "_", binary_name)
+def sanitize_identifier(value: str, *, noun: str, prefix: str) -> str:
+    sanitized = re.sub(r"[^A-Za-z0-9_]", "_", value)
     if not sanitized:
-        raise SystemExit("binary name must contain at least one identifier character")
+        raise SystemExit(f"{noun} must contain at least one identifier character")
     if sanitized[0].isdigit():
-        sanitized = f"module_{sanitized}"
+        sanitized = f"{prefix}{sanitized}"
     return sanitized
+
+
+def sanitize_rust_module_name(binary_name: str) -> str:
+    return sanitize_identifier(binary_name, noun="binary name", prefix="module_")
+
+
+def sanitize_time_var_name(time_flag: str) -> str:
+    return sanitize_identifier(time_flag, noun="time flag", prefix="flag_")
+
+
+def validate_algo_id(algo_id: str) -> str:
+    if not algo_id:
+        raise SystemExit("algo-id must not be empty")
+    algo_path = Path(algo_id)
+    if algo_path.name != algo_id or ".." in algo_path.parts:
+        raise SystemExit("algo-id must be a single path-safe filename stem")
+    return algo_id
 
 
 def main() -> int:
@@ -433,12 +450,13 @@ def main() -> int:
         if any(topic_dir.iterdir()):
             raise SystemExit(f"refusing to scaffold into non-empty path: {topic_dir}")
 
+    algo_id = validate_algo_id(args.algo_id)
     rust_module = sanitize_rust_module_name(args.binary_name)
-    time_var = args.time_flag.replace("-", "_")
+    time_var = sanitize_time_var_name(args.time_flag)
 
     substitutions = {
         "display_name": args.display_name,
-        "algo_id": args.algo_id,
+        "algo_id": algo_id,
         "binary_name": args.binary_name,
         "time_flag": args.time_flag,
         "time_var": time_var,
@@ -449,12 +467,12 @@ def main() -> int:
         "Makefile": render_plain_template(MAKEFILE_TEMPLATE, substitutions),
         "PROBLEM.md": PROBLEM_TEMPLATE.substitute(substitutions),
         "USAGE.md": USAGE_TEMPLATE.substitute(substitutions),
-        f"cpp/{args.algo_id}.hpp": CPP_HEADER_TEMPLATE.substitute(substitutions),
-        f"cpp/{args.algo_id}.cpp": CPP_IMPL_TEMPLATE.substitute(substitutions),
+        f"cpp/{algo_id}.hpp": CPP_HEADER_TEMPLATE.substitute(substitutions),
+        f"cpp/{algo_id}.cpp": CPP_IMPL_TEMPLATE.substitute(substitutions),
         "cpp/main.cpp": CPP_MAIN_TEMPLATE.substitute(substitutions),
-        f"python/{args.algo_id}.py": PY_MODULE_TEMPLATE.substitute(substitutions),
+        f"python/{algo_id}.py": PY_MODULE_TEMPLATE.substitute(substitutions),
         "python/main.py": PY_MAIN_TEMPLATE.substitute(substitutions),
-        f"java/{args.algo_id}.java": JAVA_ALGO_TEMPLATE.substitute(substitutions),
+        f"java/{algo_id}.java": JAVA_ALGO_TEMPLATE.substitute(substitutions),
         "java/Main.java": JAVA_MAIN_TEMPLATE.substitute(substitutions),
         "rust/Cargo.toml": RUST_CARGO_TEMPLATE.substitute(substitutions),
         f"rust/src/{rust_module}.rs": RUST_MODULE_TEMPLATE.substitute(substitutions),
