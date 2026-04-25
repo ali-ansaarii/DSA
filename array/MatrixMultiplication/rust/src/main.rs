@@ -89,7 +89,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     let right = read_matrix(&mut parser, n2, p)?;
 
     let start = Instant::now();
-    let result = multiply_matrices(&left, &right);
+    let result = multiply_matrices(&left, &right)?;
     let elapsed = start.elapsed();
 
     if time_matrix_multiplication {
