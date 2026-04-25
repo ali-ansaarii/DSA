@@ -38,6 +38,7 @@ bool ReadInput(
     queries.clear();
     queries.reserve(q);
     for (int lineIndex = 0; lineIndex < q; ++lineIndex) {
+        const int operationLine = n + lineIndex + 2;
         string operation;
         if (!(input >> operation)) {
             cerr << "Input ended early. Expected " << q << " operations.\n";
@@ -48,7 +49,7 @@ bool ReadInput(
             int index = -1;
             long long delta = 0;
             if (!(input >> index >> delta) || index < 0 || index >= n) {
-                cerr << "Invalid operation at line " << (lineIndex + 3) << ".\n";
+                cerr << "Invalid operation at line " << operationLine << ".\n";
                 return false;
             }
             queries.push_back(Query{QueryType::Add, index, -1, delta});
@@ -56,12 +57,12 @@ bool ReadInput(
             int left = -1;
             int right = -1;
             if (!(input >> left >> right) || left < 0 || right < left || right >= n) {
-                cerr << "Invalid operation at line " << (lineIndex + 3) << ".\n";
+                cerr << "Invalid operation at line " << operationLine << ".\n";
                 return false;
             }
             queries.push_back(Query{QueryType::Sum, left, right, 0});
         } else {
-            cerr << "Invalid operation at line " << (lineIndex + 3) << ".\n";
+            cerr << "Invalid operation at line " << operationLine << ".\n";
             return false;
         }
     }

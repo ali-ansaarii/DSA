@@ -45,6 +45,7 @@ def read_input(input_path: Path) -> tuple[list[int], list[Query]]:
 
     queries: list[Query] = []
     for line_index in range(q):
+        operation_line = n + line_index + 2
         try:
             operation = next_token()
         except ValueError:
@@ -56,10 +57,10 @@ def read_input(input_path: Path) -> tuple[list[int], list[Query]]:
                 index = int(next_token())
                 delta = checked_i64(int(next_token()))
             except (ValueError, OverflowError):
-                print(f"Invalid operation at line {line_index + 3}.", file=sys.stderr)
+                print(f"Invalid operation at line {operation_line}.", file=sys.stderr)
                 raise SystemExit(1)
             if not (0 <= index < n):
-                print(f"Invalid operation at line {line_index + 3}.", file=sys.stderr)
+                print(f"Invalid operation at line {operation_line}.", file=sys.stderr)
                 raise SystemExit(1)
             queries.append(Query(QueryType.ADD, index, -1, delta))
         elif operation == "sum":
@@ -67,14 +68,14 @@ def read_input(input_path: Path) -> tuple[list[int], list[Query]]:
                 left = int(next_token())
                 right = int(next_token())
             except ValueError:
-                print(f"Invalid operation at line {line_index + 3}.", file=sys.stderr)
+                print(f"Invalid operation at line {operation_line}.", file=sys.stderr)
                 raise SystemExit(1)
             if not (0 <= left <= right < n):
-                print(f"Invalid operation at line {line_index + 3}.", file=sys.stderr)
+                print(f"Invalid operation at line {operation_line}.", file=sys.stderr)
                 raise SystemExit(1)
             queries.append(Query(QueryType.SUM, left, right, 0))
         else:
-            print(f"Invalid operation at line {line_index + 3}.", file=sys.stderr)
+            print(f"Invalid operation at line {operation_line}.", file=sys.stderr)
             raise SystemExit(1)
 
     if cursor != len(tokens):

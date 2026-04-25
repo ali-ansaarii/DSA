@@ -85,6 +85,7 @@ public final class Main {
 
             List<Query> queries = new ArrayList<>(q);
             for (int lineIndex = 0; lineIndex < q; ++lineIndex) {
+                int operationLine = n + lineIndex + 2;
                 String operation = scanner.nextToken();
                 if (operation == null) {
                     throw new IllegalArgumentException("Input ended early. Expected " + q + " operations.");
@@ -95,7 +96,7 @@ public final class Main {
                     String deltaToken = scanner.nextToken();
                     if (indexToken == null || deltaToken == null) {
                         throw new IllegalArgumentException(
-                                "Invalid operation at line " + (lineIndex + 3) + ".");
+                                "Invalid operation at line " + operationLine + ".");
                     }
 
                     final int index;
@@ -105,12 +106,12 @@ public final class Main {
                         delta = Long.parseLong(deltaToken);
                     } catch (NumberFormatException exception) {
                         throw new IllegalArgumentException(
-                                "Invalid operation at line " + (lineIndex + 3) + ".");
+                                "Invalid operation at line " + operationLine + ".");
                     }
 
                     if (index < 0 || index >= n) {
                         throw new IllegalArgumentException(
-                                "Invalid operation at line " + (lineIndex + 3) + ".");
+                                "Invalid operation at line " + operationLine + ".");
                     }
 
                     queries.add(new Query(QueryType.ADD, index, -1, delta));
@@ -119,7 +120,7 @@ public final class Main {
                     String rightToken = scanner.nextToken();
                     if (leftToken == null || rightToken == null) {
                         throw new IllegalArgumentException(
-                                "Invalid operation at line " + (lineIndex + 3) + ".");
+                                "Invalid operation at line " + operationLine + ".");
                     }
 
                     final int left;
@@ -129,18 +130,18 @@ public final class Main {
                         right = Integer.parseInt(rightToken);
                     } catch (NumberFormatException exception) {
                         throw new IllegalArgumentException(
-                                "Invalid operation at line " + (lineIndex + 3) + ".");
+                                "Invalid operation at line " + operationLine + ".");
                     }
 
                     if (left < 0 || right < left || right >= n) {
                         throw new IllegalArgumentException(
-                                "Invalid operation at line " + (lineIndex + 3) + ".");
+                                "Invalid operation at line " + operationLine + ".");
                     }
 
                     queries.add(new Query(QueryType.SUM, left, right, 0));
                 } else {
                     throw new IllegalArgumentException(
-                            "Invalid operation at line " + (lineIndex + 3) + ".");
+                            "Invalid operation at line " + operationLine + ".");
                 }
             }
 

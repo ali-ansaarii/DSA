@@ -38,6 +38,7 @@ fn read_input(input_path: &str) -> Result<(Vec<i64>, Vec<Query>), String> {
 
     let mut queries = Vec::with_capacity(q);
     for line_index in 0..q {
+        let operation_line = n + line_index + 2;
         let operation = tokens
             .next()
             .ok_or_else(|| format!("Input ended early. Expected {q} operations."))?;
@@ -46,17 +47,17 @@ fn read_input(input_path: &str) -> Result<(Vec<i64>, Vec<Query>), String> {
             "add" => {
                 let index = tokens
                     .next()
-                    .ok_or_else(|| format!("Invalid operation at line {}.", line_index + 3))?
+                    .ok_or_else(|| format!("Invalid operation at line {}.", operation_line))?
                     .parse::<usize>()
-                    .map_err(|_| format!("Invalid operation at line {}.", line_index + 3))?;
+                    .map_err(|_| format!("Invalid operation at line {}.", operation_line))?;
                 let delta = tokens
                     .next()
-                    .ok_or_else(|| format!("Invalid operation at line {}.", line_index + 3))?
+                    .ok_or_else(|| format!("Invalid operation at line {}.", operation_line))?
                     .parse::<i64>()
-                    .map_err(|_| format!("Invalid operation at line {}.", line_index + 3))?;
+                    .map_err(|_| format!("Invalid operation at line {}.", operation_line))?;
 
                 if index >= n {
-                    return Err(format!("Invalid operation at line {}.", line_index + 3));
+                    return Err(format!("Invalid operation at line {}.", operation_line));
                 }
 
                 queries.push(Query::Add { index, delta });
@@ -64,23 +65,23 @@ fn read_input(input_path: &str) -> Result<(Vec<i64>, Vec<Query>), String> {
             "sum" => {
                 let left = tokens
                     .next()
-                    .ok_or_else(|| format!("Invalid operation at line {}.", line_index + 3))?
+                    .ok_or_else(|| format!("Invalid operation at line {}.", operation_line))?
                     .parse::<usize>()
-                    .map_err(|_| format!("Invalid operation at line {}.", line_index + 3))?;
+                    .map_err(|_| format!("Invalid operation at line {}.", operation_line))?;
                 let right = tokens
                     .next()
-                    .ok_or_else(|| format!("Invalid operation at line {}.", line_index + 3))?
+                    .ok_or_else(|| format!("Invalid operation at line {}.", operation_line))?
                     .parse::<usize>()
-                    .map_err(|_| format!("Invalid operation at line {}.", line_index + 3))?;
+                    .map_err(|_| format!("Invalid operation at line {}.", operation_line))?;
 
                 if left > right || right >= n {
-                    return Err(format!("Invalid operation at line {}.", line_index + 3));
+                    return Err(format!("Invalid operation at line {}.", operation_line));
                 }
 
                 queries.push(Query::Sum { left, right });
             }
             _ => {
-                return Err(format!("Invalid operation at line {}.", line_index + 3));
+                return Err(format!("Invalid operation at line {}.", operation_line));
             }
         }
     }
