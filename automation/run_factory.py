@@ -131,7 +131,11 @@ class AutomationRunner:
         return self.model_client
 
     def _create_branch(self) -> None:
-        git_ops.ensure_clean_base_branch(self.repo_root, self.args.base_branch)
+        git_ops.ensure_clean_base_branch(
+            self.repo_root,
+            self.args.base_branch,
+            allowed_dirty_roots=[self.local_root],
+        )
         if not self._state_persisted:
             self.store.initialize(self.snapshot)
             self.store.append_summary(f"initialized run for {self.spec.algorithm_name}")

@@ -163,7 +163,11 @@ class QueueRunner:
         self.summary_path = self.summary_dir / "summary.json"
 
     def run(self) -> int:
-        git_ops.ensure_clean_base_branch(self.repo_root, self.args.base_branch)
+        git_ops.ensure_clean_base_branch(
+            self.repo_root,
+            self.args.base_branch,
+            allowed_dirty_roots=[self.local_root],
+        )
         inconsistent = checklist.find_inconsistent_labels(self.checklist_path)
         if inconsistent:
             raise RuntimeError(

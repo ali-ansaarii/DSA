@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Iterable
 
 from automation.shell import run_command
 
@@ -29,7 +30,12 @@ def resolve_ref_commit(repo_root: Path, ref_name: str) -> str:
     return result.stdout.strip()
 
 
-def ensure_clean_base_branch(repo_root: Path, base_branch: str) -> None:
+def ensure_clean_base_branch(
+    repo_root: Path,
+    base_branch: str,
+    *,
+    allowed_dirty_roots: Iterable[Path] | None = None,
+) -> None:
     branch = current_branch(repo_root)
     if branch != base_branch:
         if branch:
@@ -47,8 +53,36 @@ def ensure_clean_base_branch(repo_root: Path, base_branch: str) -> None:
         ["git", "status", "--porcelain"],
         cwd=repo_root,
     )
-    if result.stdout.strip():
+    allowed_roots = [
+        path.resolve(strict=False)
+        for path in (allowed_dirty_roots or [])
+    ]
+    disallowed_lines = [
+        line
+        for line in result.stdout.splitlines()
+        if line.strip() and not _status_line_is_allowed(repo_root, line, allowed_roots)
+    ]
+    if disallowed_lines:
         raise RuntimeError("automation requires a clean working tree")
+
+
+def _status_line_is_allowed(repo_root: Path, line: str, allowed_roots: list[Path]) -> bool:
+    path_field = line[3:].strip()
+    if not path_field or not allowed_roots:
+        return False
+    candidate_paths = [segment.strip() for segment in path_field.split(" -> ")]
+    return all(_path_is_within_allowed_roots(repo_root, candidate, allowed_roots) for candidate in candidate_paths)
+
+
+def _path_is_within_allowed_roots(repo_root: Path, candidate: str, allowed_roots: list[Path]) -> bool:
+    candidate_path = (repo_root / candidate).resolve(strict=False)
+    for allowed_root in allowed_roots:
+        try:
+            candidate_path.relative_to(allowed_root)
+            return True
+        except ValueError:
+            continue
+    return False
 
 
 def create_branch(repo_root: Path, branch_name: str) -> None:
