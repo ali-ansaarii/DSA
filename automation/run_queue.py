@@ -248,6 +248,7 @@ class QueueRunner:
                 self.args.catalog,
                 "--base-branch",
                 self.args.base_branch,
+                "--ephemeral-worktree",
                 "--local-root",
                 str(self.local_root),
                 "--max-verification-fixes",

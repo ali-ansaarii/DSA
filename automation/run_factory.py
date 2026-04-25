@@ -372,12 +372,13 @@ class AutomationRunner:
         self._ensure_run_branch_checked_out()
         assert self.snapshot.pr_number is not None
         github.merge_pr(self.repo_root, self.snapshot.pr_number)
-        git_ops.checkout_base_branch(self.repo_root, self.args.base_branch)
-        git_ops.pull_base_ff_only(self.repo_root, self.args.base_branch)
-        try:
-            git_ops.delete_local_branch(self.repo_root, self.spec.branch_name)
-        except Exception:
-            pass
+        if not self.args.ephemeral_worktree:
+            git_ops.checkout_base_branch(self.repo_root, self.args.base_branch)
+            git_ops.pull_base_ff_only(self.repo_root, self.args.base_branch)
+            try:
+                git_ops.delete_local_branch(self.repo_root, self.spec.branch_name)
+            except Exception:
+                pass
         self.snapshot = self.store.transition(
             self.snapshot,
             step_name="merge_pr",
@@ -385,6 +386,7 @@ class AutomationRunner:
             evidence={
                 "pr_number": self.snapshot.pr_number,
                 "base_commit": git_ops.current_commit(self.repo_root),
+                "ephemeral_worktree": bool(self.args.ephemeral_worktree),
             },
             note=f"merged PR #{self.snapshot.pr_number}",
         )
@@ -522,6 +524,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--prompt-notes")
     parser.add_argument("--no-benchmarks", action="store_true")
     parser.add_argument("--base-branch", default="main")
+    parser.add_argument(
+        "--ephemeral-worktree",
+        action="store_true",
+        help="Skip local post-merge branch cleanup because this run is executing in a disposable worktree",
+    )
     parser.add_argument(
         "--local-root",
         default=".local",
