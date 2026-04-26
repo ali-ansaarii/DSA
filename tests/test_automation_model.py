@@ -7,10 +7,12 @@ import unittest
 from unittest.mock import patch
 
 from automation.model import (
+    ReviewDecision,
     ResponsesModelClient,
     collect_topic_files,
     load_env_defaults,
     parse_file_bundle_from_response,
+    parse_review_decision_from_response,
 )
 
 
@@ -88,6 +90,25 @@ class ModelParsingTests(unittest.TestCase):
                 client._request_bundle("prompt")
         self.assertEqual(post_mock.call_count, 2)
         self.assertIn("malformed file-bundle JSON arguments", str(ctx.exception))
+
+    def test_parse_review_decision_from_response(self) -> None:
+        payload = {
+            "output": [
+                {
+                    "type": "function_call",
+                    "name": "emit_review_decision",
+                    "arguments": "{\"decision\":\"actionable\",\"reason\":\"mixed feedback comment includes a fix request\"}",
+                }
+            ]
+        }
+        decision = parse_review_decision_from_response(payload)
+        self.assertEqual(
+            decision,
+            ReviewDecision(
+                decision="actionable",
+                reason="mixed feedback comment includes a fix request",
+            ),
+        )
 
     def test_load_env_defaults_sets_request_timeout_variable(self) -> None:
         with TemporaryDirectory() as tmp:

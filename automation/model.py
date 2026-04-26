@@ -35,6 +35,12 @@ class ModelCallResult:
     bundle: FileBundle
 
 
+@dataclass(frozen=True)
+class ReviewDecision:
+    decision: str
+    reason: str
+
+
 def load_env_defaults(env_path: Path) -> None:
     if not env_path.exists():
         return
@@ -207,6 +213,69 @@ class ResponsesModelClient:
         )
         return self._request_bundle(prompt)
 
+    def classify_review_outcome(
+        self,
+        *,
+        latest_bot_comment: str | None,
+        latest_bot_review_state: str | None,
+        latest_bot_review_body: str | None,
+        request_receipt_state: str | None,
+    ) -> ReviewDecision:
+        prompt = (
+            "Classify a GitHub PR review outcome conservatively for automation.\n"
+            "Return `clean` only if the bot output is clearly approving or clearly says no issues.\n"
+            "Return `actionable` if the bot output contains any fix request, concern, or mixed signal.\n"
+            "Return `uncertain` only if there is not enough information to decide.\n\n"
+            f"Request receipt state: {request_receipt_state or 'none'}\n"
+            f"Latest bot review state: {latest_bot_review_state or 'none'}\n"
+            "Latest bot review body:\n"
+            f"{latest_bot_review_body or '(none)'}\n\n"
+            "Latest bot issue comment:\n"
+            f"{latest_bot_comment or '(none)'}\n"
+        )
+        body = {
+            "model": self.model,
+            "reasoning": {"effort": self.reasoning_effort},
+            "max_output_tokens": 1200,
+            "input": [
+                {
+                    "role": "developer",
+                    "content": (
+                        "You classify GitHub review outcomes for an automation controller. "
+                        "Be conservative. If you are not clearly convinced the review is clean, "
+                        "return actionable or uncertain instead."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+            "tools": [
+                {
+                    "type": "function",
+                    "name": "emit_review_decision",
+                    "description": "Return the conservative automation decision for the current review state.",
+                    "strict": True,
+                    "parameters": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "decision": {
+                                "type": "string",
+                                "enum": ["clean", "actionable", "uncertain"],
+                            },
+                            "reason": {"type": "string"},
+                        },
+                        "required": ["decision", "reason"],
+                    },
+                }
+            ],
+            "tool_choice": "required",
+        }
+        response = self._post_json(body)
+        return parse_review_decision_from_response(response)
+
     def _request_bundle(self, prompt: str) -> ModelCallResult:
         body = {
             "model": self.model,
@@ -321,3 +390,15 @@ def parse_file_bundle_from_response(payload: dict[str, Any]) -> FileBundle:
         raise RuntimeError("model refused request: " + " | ".join(refusal_texts))
 
     raise RuntimeError("model response did not contain the expected file bundle tool call")
+
+
+def parse_review_decision_from_response(payload: dict[str, Any]) -> ReviewDecision:
+    outputs = payload.get("output", [])
+    for item in outputs:
+        if item.get("type") == "function_call" and item.get("name") == "emit_review_decision":
+            arguments = json.loads(item["arguments"])
+            return ReviewDecision(
+                decision=arguments["decision"],
+                reason=arguments["reason"],
+            )
+    raise RuntimeError("model response did not contain the expected review decision tool call")

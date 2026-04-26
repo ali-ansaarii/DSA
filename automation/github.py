@@ -44,6 +44,8 @@ class ReviewStatus:
     state: str
     actionable_comments: list[ReviewComment]
     latest_bot_comment: str | None
+    latest_bot_review_state: str | None = None
+    latest_bot_review_body: str | None = None
 
 
 @dataclass(frozen=True)
@@ -369,6 +371,8 @@ def parse_review_payload(payload: dict, *, not_before: str | None = None) -> Rev
             state="actionable",
             actionable_comments=actionable,
             latest_bot_comment=latest_bot_comment,
+            latest_bot_review_state=latest_bot_review.get("state") if latest_bot_review else None,
+            latest_bot_review_body=latest_bot_review.get("body") if latest_bot_review else None,
         )
 
     if _bot_comment_is_clean(latest_bot_comment):
@@ -376,6 +380,8 @@ def parse_review_payload(payload: dict, *, not_before: str | None = None) -> Rev
             state="clean",
             actionable_comments=[],
             latest_bot_comment=latest_bot_comment,
+            latest_bot_review_state=latest_bot_review.get("state") if latest_bot_review else None,
+            latest_bot_review_body=latest_bot_review.get("body") if latest_bot_review else None,
         )
 
     if latest_bot_review and latest_bot_review.get("state") == "APPROVED":
@@ -383,6 +389,8 @@ def parse_review_payload(payload: dict, *, not_before: str | None = None) -> Rev
             state="clean",
             actionable_comments=[],
             latest_bot_comment=latest_bot_comment or latest_bot_review.get("body"),
+            latest_bot_review_state=latest_bot_review.get("state"),
+            latest_bot_review_body=latest_bot_review.get("body"),
         )
 
     if latest_bot_review:
@@ -399,10 +407,14 @@ def parse_review_payload(payload: dict, *, not_before: str | None = None) -> Rev
                 )
             ],
             latest_bot_comment=latest_bot_comment or latest_bot_review.get("body"),
+            latest_bot_review_state=latest_bot_review.get("state"),
+            latest_bot_review_body=latest_bot_review.get("body"),
         )
 
     return ReviewStatus(
         state="waiting",
         actionable_comments=[],
         latest_bot_comment=latest_bot_comment,
+        latest_bot_review_state=latest_bot_review.get("state") if latest_bot_review else None,
+        latest_bot_review_body=latest_bot_review.get("body") if latest_bot_review else None,
     )

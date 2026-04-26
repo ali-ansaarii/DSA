@@ -245,6 +245,7 @@ class GitHubReviewParsingTests(unittest.TestCase):
         self.assertEqual(status.state, "actionable")
         self.assertEqual(len(status.actionable_comments), 1)
         self.assertIn("remaining concerns", status.actionable_comments[0].body)
+        self.assertEqual(status.latest_bot_review_state, "CHANGES_REQUESTED")
 
     def test_commented_bot_review_without_clean_signal_is_actionable(self) -> None:
         payload = {

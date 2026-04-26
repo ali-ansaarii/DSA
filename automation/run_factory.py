@@ -311,6 +311,7 @@ class AutomationRunner:
         progress = self.store.load_progress()
         entered_wait_at = _state_entered_at(progress, state.STATE_REVIEW_WAITING)
         latest_review_request_at = _latest_step_timestamp(progress, "request_review")
+        last_classifier_signature: tuple[str | None, str | None, str | None, str | None] | None = None
         if entered_wait_at is None:
             entered_wait_at = datetime.now(tz=timezone.utc)
 
@@ -385,6 +386,77 @@ class AutomationRunner:
                     note="Codex review returned actionable unresolved comments",
                 )
                 return
+
+            if receipt is not None and receipt.state == "acknowledged":
+                classifier_signature = (
+                    status.latest_bot_comment,
+                    status.latest_bot_review_state,
+                    status.latest_bot_review_body,
+                    receipt.state,
+                )
+                has_bot_activity = bool(
+                    status.latest_bot_comment
+                    or status.latest_bot_review_state
+                    or status.latest_bot_review_body
+                )
+                if has_bot_activity and classifier_signature != last_classifier_signature:
+                    decision = self._ensure_model_client().classify_review_outcome(
+                        latest_bot_comment=status.latest_bot_comment,
+                        latest_bot_review_state=status.latest_bot_review_state,
+                        latest_bot_review_body=status.latest_bot_review_body,
+                        request_receipt_state=receipt.state,
+                    )
+                    last_classifier_signature = classifier_signature
+                    _append_text(
+                        self.paths.review_log_path,
+                        json.dumps(
+                            {
+                                "observed_at": datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
+                                "classifier_decision": decision.decision,
+                                "classifier_reason": decision.reason,
+                            },
+                            indent=2,
+                            sort_keys=True,
+                        ),
+                    )
+                    if decision.decision == "clean":
+                        self.snapshot = self.store.transition(
+                            self.snapshot,
+                            step_name="review_clean",
+                            next_state=state.STATE_REVIEW_CLEAN,
+                            evidence={"pr_number": self.snapshot.pr_number},
+                            note=f"review classifier marked clean: {decision.reason}",
+                        )
+                        return
+                    if decision.decision == "actionable":
+                        if self.snapshot.review_fix_attempts >= self.args.max_review_fixes:
+                            raise RuntimeError(
+                                "review classifier returned actionable after bounded fix attempts"
+                            )
+                        self.snapshot.review_fix_attempts += 1
+                        self.store.save_snapshot(self.snapshot)
+                        synthetic_comment = github.ReviewComment(
+                            path=None,
+                            line=None,
+                            body=decision.reason,
+                            url=None,
+                            author="review-classifier",
+                            created_at=datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
+                        )
+                        serialized_comments = [synthetic_comment.__dict__]
+                        self.store.save_review_comments(serialized_comments)
+                        self._cached_review_comments = [synthetic_comment]
+                        self.snapshot = self.store.transition(
+                            self.snapshot,
+                            step_name="review_actionable",
+                            next_state=state.STATE_REVIEW_FIXING,
+                            evidence={
+                                "comments": 1,
+                                "review_comments_path": str(self.paths.review_comments_path),
+                            },
+                            note=f"review classifier returned actionable: {decision.reason}",
+                        )
+                        return
 
             if (
                 receipt is not None
