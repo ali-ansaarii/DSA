@@ -7,9 +7,10 @@ public final class Main {
     private record ProblemInput(int k, long[] values) {}
 
     private static ProblemInput readInput(Path inputPath) throws IOException {
-        List<String> tokens = Files.readString(inputPath).trim().isEmpty()
+        String contents = Files.readString(inputPath).trim();
+        List<String> tokens = contents.isEmpty()
             ? List.of()
-            : List.of(Files.readString(inputPath).trim().split("\\s+"));
+            : List.of(contents.split("\\s+"));
 
         if (tokens.size() < 2) {
             throw new IllegalArgumentException("Input must start with n and k");
