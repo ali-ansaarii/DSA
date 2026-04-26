@@ -468,7 +468,7 @@ class AutomationRunner:
                 )
                 waiting_for_pickup = datetime.now(tz=timezone.utc) - request_created_at
                 if waiting_for_pickup.total_seconds() >= self.args.review_request_pickup_timeout_seconds:
-                    if self.snapshot.review_request_pickup_retries >= self.args.max_review_request_attempts:
+                    if self.snapshot.review_request_attempts >= self.args.max_review_request_attempts:
                         raise RuntimeError("Codex did not acknowledge the review request")
                     self._request_review(pickup_retry=True)
                     return
