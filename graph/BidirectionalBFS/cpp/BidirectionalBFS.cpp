@@ -18,7 +18,7 @@ vector<int> buildPath(int meeting, const vector<int>& parentFromSource, const ve
     reverse(left.begin(), left.end());
 
     vector<int> path = left;
-    for (int vertex = parentFromTarget[meeting]; vertex != -1;) {
+    for (int vertex = parentFromTarget[meeting]; vertex != -1 && vertex != meeting;) {
         path.push_back(vertex);
         if (parentFromTarget[vertex] == vertex) {
             break;
