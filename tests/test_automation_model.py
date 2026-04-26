@@ -4,12 +4,15 @@ import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 
 from automation.model import (
+    ReviewDecision,
     ResponsesModelClient,
     collect_topic_files,
     load_env_defaults,
     parse_file_bundle_from_response,
+    parse_review_decision_from_response,
 )
 
 
@@ -38,6 +41,74 @@ class ModelParsingTests(unittest.TestCase):
             (build_dir / "program").write_bytes(b"\xcf\x00\x01binary")
             files = collect_topic_files(topic_dir)
         self.assertEqual(files, [("PROBLEM.md", "docs")])
+
+    def test_request_bundle_retries_on_malformed_tool_arguments(self) -> None:
+        client = ResponsesModelClient(
+            api_key="test-key",
+            malformed_response_retries=1,
+        )
+        malformed = {
+            "output": [
+                {
+                    "type": "function_call",
+                    "name": "emit_file_bundle",
+                    "arguments": "{\"summary\":\"generated\",\"files\":[{\"path\":\"topic/PROBLEM.md\",\"content\":\"hello\"}]",
+                }
+            ]
+        }
+        valid = {
+            "output": [
+                {
+                    "type": "function_call",
+                    "name": "emit_file_bundle",
+                    "arguments": "{\"summary\":\"generated\",\"files\":[{\"path\":\"topic/PROBLEM.md\",\"content\":\"hello\"}]}",
+                }
+            ]
+        }
+        with patch.object(client, "_post_json", side_effect=[malformed, valid]) as post_mock:
+            result = client._request_bundle("prompt")
+        self.assertEqual(post_mock.call_count, 2)
+        self.assertEqual(result.bundle.summary, "generated")
+        self.assertEqual(result.bundle.files[0].path, "topic/PROBLEM.md")
+
+    def test_request_bundle_raises_after_retry_budget_exhausted(self) -> None:
+        client = ResponsesModelClient(
+            api_key="test-key",
+            malformed_response_retries=1,
+        )
+        malformed = {
+            "output": [
+                {
+                    "type": "function_call",
+                    "name": "emit_file_bundle",
+                    "arguments": "{\"summary\":\"generated\",\"files\":[{\"path\":\"topic/PROBLEM.md\",\"content\":\"hello\"}]",
+                }
+            ]
+        }
+        with patch.object(client, "_post_json", side_effect=[malformed, malformed]) as post_mock:
+            with self.assertRaises(RuntimeError) as ctx:
+                client._request_bundle("prompt")
+        self.assertEqual(post_mock.call_count, 2)
+        self.assertIn("malformed file-bundle JSON arguments", str(ctx.exception))
+
+    def test_parse_review_decision_from_response(self) -> None:
+        payload = {
+            "output": [
+                {
+                    "type": "function_call",
+                    "name": "emit_review_decision",
+                    "arguments": "{\"decision\":\"actionable\",\"reason\":\"mixed feedback comment includes a fix request\"}",
+                }
+            ]
+        }
+        decision = parse_review_decision_from_response(payload)
+        self.assertEqual(
+            decision,
+            ReviewDecision(
+                decision="actionable",
+                reason="mixed feedback comment includes a fix request",
+            ),
+        )
 
     def test_load_env_defaults_sets_request_timeout_variable(self) -> None:
         with TemporaryDirectory() as tmp:

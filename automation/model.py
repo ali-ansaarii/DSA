@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+from json import JSONDecodeError
 import os
 from pathlib import Path
 import socket
@@ -32,6 +33,12 @@ class ModelCallResult:
     prompt: str
     raw_response: dict[str, Any]
     bundle: FileBundle
+
+
+@dataclass(frozen=True)
+class ReviewDecision:
+    decision: str
+    reason: str
 
 
 def load_env_defaults(env_path: Path) -> None:
@@ -117,6 +124,7 @@ class ResponsesModelClient:
         reasoning_effort: str = "medium",
         max_output_tokens: int = 12000,
         request_timeout_seconds: int = 120,
+        malformed_response_retries: int = 2,
     ) -> None:
         self.api_key = api_key
         self.model = model
@@ -124,6 +132,7 @@ class ResponsesModelClient:
         self.reasoning_effort = reasoning_effort
         self.max_output_tokens = max_output_tokens
         self.request_timeout_seconds = request_timeout_seconds
+        self.malformed_response_retries = malformed_response_retries
 
     @classmethod
     def from_environment(cls, repo_root: Path) -> "ResponsesModelClient":
@@ -139,6 +148,9 @@ class ResponsesModelClient:
             max_output_tokens=int(os.environ.get("OPENAI_AUTOMATION_MAX_OUTPUT_TOKENS", "12000")),
             request_timeout_seconds=int(
                 os.environ.get("OPENAI_AUTOMATION_REQUEST_TIMEOUT_SECONDS", "120")
+            ),
+            malformed_response_retries=int(
+                os.environ.get("OPENAI_AUTOMATION_MALFORMED_RESPONSE_RETRIES", "2")
             ),
         )
 
@@ -201,6 +213,69 @@ class ResponsesModelClient:
         )
         return self._request_bundle(prompt)
 
+    def classify_review_outcome(
+        self,
+        *,
+        latest_bot_comment: str | None,
+        latest_bot_review_state: str | None,
+        latest_bot_review_body: str | None,
+        request_receipt_state: str | None,
+    ) -> ReviewDecision:
+        prompt = (
+            "Classify a GitHub PR review outcome conservatively for automation.\n"
+            "Return `clean` only if the bot output is clearly approving or clearly says no issues.\n"
+            "Return `actionable` if the bot output contains any fix request, concern, or mixed signal.\n"
+            "Return `uncertain` only if there is not enough information to decide.\n\n"
+            f"Request receipt state: {request_receipt_state or 'none'}\n"
+            f"Latest bot review state: {latest_bot_review_state or 'none'}\n"
+            "Latest bot review body:\n"
+            f"{latest_bot_review_body or '(none)'}\n\n"
+            "Latest bot issue comment:\n"
+            f"{latest_bot_comment or '(none)'}\n"
+        )
+        body = {
+            "model": self.model,
+            "reasoning": {"effort": self.reasoning_effort},
+            "max_output_tokens": 1200,
+            "input": [
+                {
+                    "role": "developer",
+                    "content": (
+                        "You classify GitHub review outcomes for an automation controller. "
+                        "Be conservative. If you are not clearly convinced the review is clean, "
+                        "return actionable or uncertain instead."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+            "tools": [
+                {
+                    "type": "function",
+                    "name": "emit_review_decision",
+                    "description": "Return the conservative automation decision for the current review state.",
+                    "strict": True,
+                    "parameters": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "decision": {
+                                "type": "string",
+                                "enum": ["clean", "actionable", "uncertain"],
+                            },
+                            "reason": {"type": "string"},
+                        },
+                        "required": ["decision", "reason"],
+                    },
+                }
+            ],
+            "tool_choice": "required",
+        }
+        response = self._post_json(body)
+        return parse_review_decision_from_response(response)
+
     def _request_bundle(self, prompt: str) -> ModelCallResult:
         body = {
             "model": self.model,
@@ -246,12 +321,28 @@ class ResponsesModelClient:
             ],
             "tool_choice": "required",
         }
-        response = self._post_json(body)
-        return ModelCallResult(
-            prompt=prompt,
-            raw_response=response,
-            bundle=parse_file_bundle_from_response(response),
-        )
+        last_payload: dict[str, Any] | None = None
+        last_error: JSONDecodeError | None = None
+        total_attempts = self.malformed_response_retries + 1
+        for attempt in range(1, total_attempts + 1):
+            response = self._post_json(body)
+            last_payload = response
+            try:
+                bundle = parse_file_bundle_from_response(response)
+                return ModelCallResult(
+                    prompt=prompt,
+                    raw_response=response,
+                    bundle=bundle,
+                )
+            except JSONDecodeError as exc:
+                last_error = exc
+                if attempt == total_attempts:
+                    break
+        assert last_error is not None
+        raise RuntimeError(
+            "model returned malformed file-bundle JSON arguments after "
+            f"{total_attempts} attempts: {last_error}"
+        ) from last_error
 
     def _post_json(self, body: dict[str, Any]) -> dict[str, Any]:
         payload = json.dumps(body).encode("utf-8")
@@ -299,3 +390,15 @@ def parse_file_bundle_from_response(payload: dict[str, Any]) -> FileBundle:
         raise RuntimeError("model refused request: " + " | ".join(refusal_texts))
 
     raise RuntimeError("model response did not contain the expected file bundle tool call")
+
+
+def parse_review_decision_from_response(payload: dict[str, Any]) -> ReviewDecision:
+    outputs = payload.get("output", [])
+    for item in outputs:
+        if item.get("type") == "function_call" and item.get("name") == "emit_review_decision":
+            arguments = json.loads(item["arguments"])
+            return ReviewDecision(
+                decision=arguments["decision"],
+                reason=arguments["reason"],
+            )
+    raise RuntimeError("model response did not contain the expected review decision tool call")

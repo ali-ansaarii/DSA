@@ -8,6 +8,9 @@ from unittest.mock import MagicMock, patch
 
 from automation.github import (
     BOT_LOGINS,
+    ReviewRequestComment,
+    ReviewRequestReceipt,
+    fetch_review_request_receipt,
     get_review_token,
     merge_pr,
     parse_review_payload,
@@ -43,6 +46,91 @@ class GitHubReviewParsingTests(unittest.TestCase):
         }
         status = parse_review_payload(payload)
         self.assertEqual(status.state, "clean")
+        self.assertEqual(status.actionable_comments, [])
+
+    def test_alternate_clean_review_phrases_are_detected(self) -> None:
+        for body in (
+            "Codex Review: No major issues found.",
+            "Codex Review: No issues found.",
+            "Codex Review: Nothing major to flag here.",
+            "Codex Review: Looks good to me.",
+            "Codex Review: LGTM",
+        ):
+            payload = {
+                "data": {
+                    "repository": {
+                        "pullRequest": {
+                            "reviewThreads": {"nodes": []},
+                            "comments": {
+                                "nodes": [
+                                    {
+                                        "author": {"login": "chatgpt-codex-connector[bot]"},
+                                        "body": body,
+                                        "createdAt": "2026-04-25T10:00:00Z",
+                                        "url": "https://example.test/comment/alt-clean",
+                                    }
+                                ]
+                            },
+                            "reviews": {"nodes": []},
+                        }
+                    }
+                }
+            }
+            status = parse_review_payload(payload)
+            self.assertEqual(status.state, "clean", body)
+            self.assertEqual(status.actionable_comments, [], body)
+
+    def test_generic_wrapper_comment_is_not_treated_as_clean(self) -> None:
+        payload = {
+            "data": {
+                "repository": {
+                    "pullRequest": {
+                        "reviewThreads": {"nodes": []},
+                        "comments": {
+                            "nodes": [
+                                {
+                                    "author": {"login": "chatgpt-codex-connector[bot]"},
+                                    "body": (
+                                        "### 💡 Codex Review\n\n"
+                                        "Here are some automated review suggestions for this pull request."
+                                    ),
+                                    "createdAt": "2026-04-25T10:00:00Z",
+                                    "url": "https://example.test/comment/wrapper",
+                                }
+                            ]
+                        },
+                        "reviews": {"nodes": []},
+                    }
+                }
+            }
+        }
+        status = parse_review_payload(payload)
+        self.assertEqual(status.state, "waiting")
+        self.assertEqual(status.actionable_comments, [])
+
+    def test_mixed_positive_comment_is_not_treated_as_clean(self) -> None:
+        payload = {
+            "data": {
+                "repository": {
+                    "pullRequest": {
+                        "reviewThreads": {"nodes": []},
+                        "comments": {
+                            "nodes": [
+                                {
+                                    "author": {"login": "chatgpt-codex-connector[bot]"},
+                                    "body": "Codex Review: Looks good overall, but fix the Java parser.",
+                                    "createdAt": "2026-04-25T10:00:00Z",
+                                    "url": "https://example.test/comment/mixed",
+                                }
+                            ]
+                        },
+                        "reviews": {"nodes": []},
+                    }
+                }
+            }
+        }
+        status = parse_review_payload(payload)
+        self.assertEqual(status.state, "waiting")
         self.assertEqual(status.actionable_comments, [])
 
     def test_unresolved_bot_thread_is_actionable(self) -> None:
@@ -157,6 +245,7 @@ class GitHubReviewParsingTests(unittest.TestCase):
         self.assertEqual(status.state, "actionable")
         self.assertEqual(len(status.actionable_comments), 1)
         self.assertIn("remaining concerns", status.actionable_comments[0].body)
+        self.assertEqual(status.latest_bot_review_state, "CHANGES_REQUESTED")
 
     def test_commented_bot_review_without_clean_signal_is_actionable(self) -> None:
         payload = {
@@ -211,13 +300,15 @@ class GitHubReviewRequestTests(unittest.TestCase):
         urlopen_mock: MagicMock,
     ) -> None:
         response = MagicMock()
-        response.status = 201
+        response.read.return_value = (
+            b'{"id": 12345, "created_at": "2026-04-26T20:14:32Z"}'
+        )
         urlopen_mock.return_value.__enter__.return_value = response
         with TemporaryDirectory() as tmp:
             repo_root = Path(tmp)
             (repo_root / ".env").write_text("GH_TOKEN=gh-token\n", encoding="utf-8")
             with patch.dict(os.environ, {}, clear=True):
-                request_codex_review(repo_root, 25)
+                comment = request_codex_review(repo_root, 25)
 
         parse_remote_owner_repo_mock.assert_called_once_with(Path(tmp))
         req = urlopen_mock.call_args.args[0]
@@ -227,6 +318,58 @@ class GitHubReviewRequestTests(unittest.TestCase):
         )
         self.assertEqual(req.get_method(), "POST")
         self.assertEqual(req.headers["Authorization"], "token gh-token")
+        self.assertEqual(
+            comment,
+            ReviewRequestComment(comment_id=12345, created_at="2026-04-26T20:14:32Z"),
+        )
+
+    @patch("automation.github.request.urlopen")
+    @patch("automation.github.parse_remote_owner_repo", return_value=("ali-ansaarii", "DSA"))
+    def test_fetch_review_request_receipt_detects_eyes_and_thumbs_up(
+        self,
+        parse_remote_owner_repo_mock: MagicMock,
+        urlopen_mock: MagicMock,
+    ) -> None:
+        response = MagicMock()
+        response.read.return_value = (
+            b'[{"content":"eyes","created_at":"2026-04-26T20:14:41Z","user":{"login":"chatgpt-codex-connector[bot]"}}]'
+        )
+        urlopen_mock.return_value.__enter__.return_value = response
+        with TemporaryDirectory() as tmp:
+            repo_root = Path(tmp)
+            (repo_root / ".env").write_text("GH_TOKEN=gh-token\n", encoding="utf-8")
+            with patch.dict(os.environ, {}, clear=True):
+                receipt = fetch_review_request_receipt(repo_root, comment_id=99)
+
+        parse_remote_owner_repo_mock.assert_called_once_with(Path(tmp))
+        self.assertEqual(
+            receipt,
+            ReviewRequestReceipt(state="acknowledged", seen_at="2026-04-26T20:14:41Z"),
+        )
+
+    @patch("automation.github.request.urlopen")
+    @patch("automation.github.parse_remote_owner_repo", return_value=("ali-ansaarii", "DSA"))
+    def test_fetch_review_request_receipt_detects_clean_thumbs_up(
+        self,
+        parse_remote_owner_repo_mock: MagicMock,
+        urlopen_mock: MagicMock,
+    ) -> None:
+        response = MagicMock()
+        response.read.return_value = (
+            b'[{"content":"+1","created_at":"2026-04-26T20:20:00Z","user":{"login":"chatgpt-codex-connector[bot]"}}]'
+        )
+        urlopen_mock.return_value.__enter__.return_value = response
+        with TemporaryDirectory() as tmp:
+            repo_root = Path(tmp)
+            (repo_root / ".env").write_text("GH_TOKEN=gh-token\n", encoding="utf-8")
+            with patch.dict(os.environ, {}, clear=True):
+                receipt = fetch_review_request_receipt(repo_root, comment_id=100)
+
+        parse_remote_owner_repo_mock.assert_called_once_with(Path(tmp))
+        self.assertEqual(
+            receipt,
+            ReviewRequestReceipt(state="clean", seen_at="2026-04-26T20:20:00Z"),
+        )
 
     @patch("automation.github.run_command")
     def test_merge_pr_omits_delete_branch_when_requested(

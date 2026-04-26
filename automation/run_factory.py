@@ -280,16 +280,29 @@ class AutomationRunner:
             note=f"opened PR #{pr_number}",
         )
 
-    def _request_review(self) -> None:
+    def _request_review(self, *, pickup_retry: bool = False) -> None:
         self._ensure_run_branch_checked_out()
         assert self.snapshot.pr_number is not None
-        github.request_codex_review(self.repo_root, self.snapshot.pr_number)
+        request_comment = github.request_codex_review(self.repo_root, self.snapshot.pr_number)
+        self.snapshot.review_request_attempts += 1
+        if pickup_retry:
+            self.snapshot.review_request_pickup_retries += 1
+        else:
+            self.snapshot.review_request_pickup_retries = 0
+        self.snapshot.review_request_comment_id = request_comment.comment_id
+        self.snapshot.review_request_comment_created_at = request_comment.created_at
+        self.store.save_snapshot(self.snapshot)
         self.snapshot = self.store.transition(
             self.snapshot,
             step_name="request_review",
             next_state=state.STATE_REVIEW_REQUESTED,
-            evidence={"pr_number": self.snapshot.pr_number},
-            note="requested Codex review",
+            evidence={
+                "pr_number": self.snapshot.pr_number,
+                "request_comment_id": request_comment.comment_id,
+                "request_attempt": self.snapshot.review_request_attempts,
+                "pickup_retry_attempt": self.snapshot.review_request_pickup_retries,
+            },
+            note="requested Codex review" if not pickup_retry else "retried Codex review request after no pickup",
         )
 
     def _poll_review(self) -> None:
@@ -298,10 +311,17 @@ class AutomationRunner:
         progress = self.store.load_progress()
         entered_wait_at = _state_entered_at(progress, state.STATE_REVIEW_WAITING)
         latest_review_request_at = _latest_step_timestamp(progress, "request_review")
+        last_classifier_signature: tuple[str | None, str | None, str | None, str | None] | None = None
         if entered_wait_at is None:
             entered_wait_at = datetime.now(tz=timezone.utc)
 
         while True:
+            receipt = None
+            if self.snapshot.review_request_comment_id is not None:
+                receipt = github.fetch_review_request_receipt(
+                    self.repo_root,
+                    comment_id=self.snapshot.review_request_comment_id,
+                )
             status = github.fetch_review_status(
                 self.repo_root,
                 self.snapshot.pr_number,
@@ -312,6 +332,9 @@ class AutomationRunner:
                 json.dumps(
                     {
                         "observed_at": datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
+                        "request_comment_id": self.snapshot.review_request_comment_id,
+                        "receipt_state": None if receipt is None else receipt.state,
+                        "receipt_seen_at": None if receipt is None else receipt.seen_at,
                         "state": status.state,
                         "latest_bot_comment": status.latest_bot_comment,
                         "actionable_count": len(status.actionable_comments),
@@ -328,6 +351,19 @@ class AutomationRunner:
                     next_state=state.STATE_REVIEW_CLEAN,
                     evidence={"pr_number": self.snapshot.pr_number},
                     note=status.latest_bot_comment or "Codex review clean",
+                )
+                return
+
+            if receipt is not None and receipt.state == "clean":
+                self.snapshot = self.store.transition(
+                    self.snapshot,
+                    step_name="review_clean",
+                    next_state=state.STATE_REVIEW_CLEAN,
+                    evidence={
+                        "pr_number": self.snapshot.pr_number,
+                        "request_comment_id": self.snapshot.review_request_comment_id,
+                    },
+                    note="Codex acknowledged clean review with +1 reaction",
                 )
                 return
 
@@ -350,6 +386,92 @@ class AutomationRunner:
                     note="Codex review returned actionable unresolved comments",
                 )
                 return
+
+            if receipt is not None and receipt.state == "acknowledged":
+                classifier_signature = (
+                    status.latest_bot_comment,
+                    status.latest_bot_review_state,
+                    status.latest_bot_review_body,
+                    receipt.state,
+                )
+                has_bot_activity = bool(
+                    status.latest_bot_comment
+                    or status.latest_bot_review_state
+                    or status.latest_bot_review_body
+                )
+                if has_bot_activity and classifier_signature != last_classifier_signature:
+                    decision = self._ensure_model_client().classify_review_outcome(
+                        latest_bot_comment=status.latest_bot_comment,
+                        latest_bot_review_state=status.latest_bot_review_state,
+                        latest_bot_review_body=status.latest_bot_review_body,
+                        request_receipt_state=receipt.state,
+                    )
+                    last_classifier_signature = classifier_signature
+                    _append_text(
+                        self.paths.review_log_path,
+                        json.dumps(
+                            {
+                                "observed_at": datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
+                                "classifier_decision": decision.decision,
+                                "classifier_reason": decision.reason,
+                            },
+                            indent=2,
+                            sort_keys=True,
+                        ),
+                    )
+                    if decision.decision == "clean":
+                        self.snapshot = self.store.transition(
+                            self.snapshot,
+                            step_name="review_clean",
+                            next_state=state.STATE_REVIEW_CLEAN,
+                            evidence={"pr_number": self.snapshot.pr_number},
+                            note=f"review classifier marked clean: {decision.reason}",
+                        )
+                        return
+                    if decision.decision == "actionable":
+                        if self.snapshot.review_fix_attempts >= self.args.max_review_fixes:
+                            raise RuntimeError(
+                                "review classifier returned actionable after bounded fix attempts"
+                            )
+                        self.snapshot.review_fix_attempts += 1
+                        self.store.save_snapshot(self.snapshot)
+                        synthetic_comment = github.ReviewComment(
+                            path=None,
+                            line=None,
+                            body=decision.reason,
+                            url=None,
+                            author="review-classifier",
+                            created_at=datetime.now(tz=timezone.utc).isoformat(timespec="seconds"),
+                        )
+                        serialized_comments = [synthetic_comment.__dict__]
+                        self.store.save_review_comments(serialized_comments)
+                        self._cached_review_comments = [synthetic_comment]
+                        self.snapshot = self.store.transition(
+                            self.snapshot,
+                            step_name="review_actionable",
+                            next_state=state.STATE_REVIEW_FIXING,
+                            evidence={
+                                "comments": 1,
+                                "review_comments_path": str(self.paths.review_comments_path),
+                            },
+                            note=f"review classifier returned actionable: {decision.reason}",
+                        )
+                        return
+
+            if (
+                receipt is not None
+                and receipt.state == "waiting"
+                and self.snapshot.review_request_comment_created_at
+            ):
+                request_created_at = datetime.fromisoformat(
+                    self.snapshot.review_request_comment_created_at.replace("Z", "+00:00")
+                )
+                waiting_for_pickup = datetime.now(tz=timezone.utc) - request_created_at
+                if waiting_for_pickup.total_seconds() >= self.args.review_request_pickup_timeout_seconds:
+                    if self.snapshot.review_request_attempts >= self.args.max_review_request_attempts:
+                        raise RuntimeError("Codex did not acknowledge the review request")
+                    self._request_review(pickup_retry=True)
+                    return
 
             elapsed = datetime.now(tz=timezone.utc) - entered_wait_at
             if elapsed.total_seconds() >= self.args.review_timeout_seconds:
@@ -564,7 +686,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--stop-after", choices=sorted(state.ALLOWED_TRANSITIONS))
     parser.add_argument("--max-verification-fixes", type=int, default=3)
     parser.add_argument("--max-review-fixes", type=int, default=3)
+    parser.add_argument("--max-review-request-attempts", type=int, default=3)
     parser.add_argument("--poll-interval-seconds", type=int, default=120)
+    parser.add_argument("--review-request-pickup-timeout-seconds", type=int, default=90)
     parser.add_argument("--review-timeout-seconds", type=int, default=1800)
     return parser
 

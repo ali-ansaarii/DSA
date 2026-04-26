@@ -80,6 +80,7 @@ ALLOWED_TRANSITIONS = {
         STATE_MANUAL_ATTENTION,
     },
     STATE_REVIEW_WAITING: {
+        STATE_REVIEW_REQUESTED,
         STATE_REVIEW_WAITING,
         STATE_REVIEW_FIXING,
         STATE_REVIEW_CLEAN,
@@ -157,7 +158,11 @@ class RunSnapshot:
     latest_commit: str | None = None
     generation_attempts: int = 0
     verification_fix_attempts: int = 0
+    review_request_attempts: int = 0
+    review_request_pickup_retries: int = 0
     review_fix_attempts: int = 0
+    review_request_comment_id: int | None = None
+    review_request_comment_created_at: str | None = None
     created_at: str = field(default_factory=utc_now)
     updated_at: str = field(default_factory=utc_now)
 

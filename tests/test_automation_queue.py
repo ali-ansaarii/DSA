@@ -143,7 +143,9 @@ class QueueRunnerBehaviorTests(unittest.TestCase):
                 stop_after=None,
                 max_verification_fixes=3,
                 max_review_fixes=3,
+                max_review_request_attempts=3,
                 poll_interval_seconds=120,
+                review_request_pickup_timeout_seconds=90,
                 review_timeout_seconds=1800,
             )
             runner = QueueRunner(repo_root, args)
@@ -214,7 +216,9 @@ class QueueRunnerBehaviorTests(unittest.TestCase):
                 stop_after=None,
                 max_verification_fixes=3,
                 max_review_fixes=3,
+                max_review_request_attempts=3,
                 poll_interval_seconds=120,
+                review_request_pickup_timeout_seconds=90,
                 review_timeout_seconds=1800,
             )
             runner = QueueRunner(repo_root, args)
