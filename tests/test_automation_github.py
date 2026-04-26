@@ -108,6 +108,31 @@ class GitHubReviewParsingTests(unittest.TestCase):
         self.assertEqual(status.state, "waiting")
         self.assertEqual(status.actionable_comments, [])
 
+    def test_mixed_positive_comment_is_not_treated_as_clean(self) -> None:
+        payload = {
+            "data": {
+                "repository": {
+                    "pullRequest": {
+                        "reviewThreads": {"nodes": []},
+                        "comments": {
+                            "nodes": [
+                                {
+                                    "author": {"login": "chatgpt-codex-connector[bot]"},
+                                    "body": "Codex Review: Looks good overall, but fix the Java parser.",
+                                    "createdAt": "2026-04-25T10:00:00Z",
+                                    "url": "https://example.test/comment/mixed",
+                                }
+                            ]
+                        },
+                        "reviews": {"nodes": []},
+                    }
+                }
+            }
+        }
+        status = parse_review_payload(payload)
+        self.assertEqual(status.state, "waiting")
+        self.assertEqual(status.actionable_comments, [])
+
     def test_unresolved_bot_thread_is_actionable(self) -> None:
         payload = {
             "data": {

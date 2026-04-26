@@ -280,11 +280,15 @@ class AutomationRunner:
             note=f"opened PR #{pr_number}",
         )
 
-    def _request_review(self) -> None:
+    def _request_review(self, *, pickup_retry: bool = False) -> None:
         self._ensure_run_branch_checked_out()
         assert self.snapshot.pr_number is not None
         request_comment = github.request_codex_review(self.repo_root, self.snapshot.pr_number)
         self.snapshot.review_request_attempts += 1
+        if pickup_retry:
+            self.snapshot.review_request_pickup_retries += 1
+        else:
+            self.snapshot.review_request_pickup_retries = 0
         self.snapshot.review_request_comment_id = request_comment.comment_id
         self.snapshot.review_request_comment_created_at = request_comment.created_at
         self.store.save_snapshot(self.snapshot)
@@ -296,8 +300,9 @@ class AutomationRunner:
                 "pr_number": self.snapshot.pr_number,
                 "request_comment_id": request_comment.comment_id,
                 "request_attempt": self.snapshot.review_request_attempts,
+                "pickup_retry_attempt": self.snapshot.review_request_pickup_retries,
             },
-            note="requested Codex review",
+            note="requested Codex review" if not pickup_retry else "retried Codex review request after no pickup",
         )
 
     def _poll_review(self) -> None:
@@ -391,9 +396,9 @@ class AutomationRunner:
                 )
                 waiting_for_pickup = datetime.now(tz=timezone.utc) - request_created_at
                 if waiting_for_pickup.total_seconds() >= self.args.review_request_pickup_timeout_seconds:
-                    if self.snapshot.review_request_attempts >= self.args.max_review_request_attempts:
+                    if self.snapshot.review_request_pickup_retries >= self.args.max_review_request_attempts:
                         raise RuntimeError("Codex did not acknowledge the review request")
-                    self._request_review()
+                    self._request_review(pickup_retry=True)
                     return
 
             elapsed = datetime.now(tz=timezone.utc) - entered_wait_at

@@ -159,6 +159,7 @@ class RunSnapshot:
     generation_attempts: int = 0
     verification_fix_attempts: int = 0
     review_request_attempts: int = 0
+    review_request_pickup_retries: int = 0
     review_fix_attempts: int = 0
     review_request_comment_id: int | None = None
     review_request_comment_created_at: str | None = None

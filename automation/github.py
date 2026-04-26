@@ -17,13 +17,13 @@ GENERIC_REVIEW_WRAPPER_RE = re.compile(
     re.IGNORECASE,
 )
 CLEAN_REVIEW_PATTERNS = [
-    re.compile(r"didn['’]?t find any major issues", re.IGNORECASE),
-    re.compile(r"no major issues found", re.IGNORECASE),
-    re.compile(r"no issues found", re.IGNORECASE),
-    re.compile(r"no major concerns", re.IGNORECASE),
-    re.compile(r"nothing major to flag", re.IGNORECASE),
-    re.compile(r"looks good(?: to me)?", re.IGNORECASE),
-    re.compile(r"\blgtm\b", re.IGNORECASE),
+    re.compile(r"^(?:codex review:\s*)?didn['’]?t find any major issues(?:[.!]\s*.*)?$", re.IGNORECASE),
+    re.compile(r"^(?:codex review:\s*)?no major issues found(?:[.!]\s*.*)?$", re.IGNORECASE),
+    re.compile(r"^(?:codex review:\s*)?no issues found(?:[.!]\s*.*)?$", re.IGNORECASE),
+    re.compile(r"^(?:codex review:\s*)?no major concerns(?:[.!]\s*.*)?$", re.IGNORECASE),
+    re.compile(r"^(?:codex review:\s*)?nothing major to flag(?: here)?(?:[.!]\s*.*)?$", re.IGNORECASE),
+    re.compile(r"^(?:codex review:\s*)?looks good(?: to me)?(?:[.!]\s*.*)?$", re.IGNORECASE),
+    re.compile(r"^(?:codex review:\s*)?lgtm(?:[.!]\s*.*)?$", re.IGNORECASE),
 ]
 EYES_REACTION = "eyes"
 THUMBS_UP_REACTION = "+1"
@@ -63,7 +63,8 @@ def _bot_comment_is_clean(body: str | None) -> bool:
         return False
     if GENERIC_REVIEW_WRAPPER_RE.search(body):
         return False
-    return any(pattern.search(body) for pattern in CLEAN_REVIEW_PATTERNS)
+    first_paragraph = body.split("\n\n", 1)[0].strip()
+    return any(pattern.match(first_paragraph) for pattern in CLEAN_REVIEW_PATTERNS)
 
 
 def _parse_timestamp(value: str | None) -> datetime | None:
