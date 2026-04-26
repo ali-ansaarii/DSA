@@ -27,7 +27,7 @@ def _build_path(
 
     path = left[:]
     vertex = parent_from_target[meeting]
-    while vertex != -1:
+    while vertex != -1 and vertex != meeting:
         path.append(vertex)
         if parent_from_target[vertex] == vertex:
             break

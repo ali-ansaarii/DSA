@@ -103,6 +103,9 @@ fn build_path(
     let mut path = left;
     vertex = parent_from_target[meeting];
     while let Some(current) = vertex {
+        if current == meeting {
+            break;
+        }
         path.push(current);
         vertex = parent_from_target[current];
         if vertex == Some(current) {

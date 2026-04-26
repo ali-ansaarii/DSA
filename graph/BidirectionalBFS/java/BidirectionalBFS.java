@@ -89,7 +89,7 @@ public final class BidirectionalBFS {
         Collections.reverse(left);
 
         ArrayList<Integer> path = new ArrayList<>(left);
-        for (int vertex = parentFromTarget[meeting]; vertex != -1; ) {
+        for (int vertex = parentFromTarget[meeting]; vertex != -1 && vertex != meeting; ) {
             path.add(vertex);
             if (parentFromTarget[vertex] == vertex) {
                 break;
