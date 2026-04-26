@@ -17,6 +17,8 @@ TARGET := topological-sort-dfs-based
 CPP_SRC := $(CPP_DIR)/TopologicalSortDFSBased.cpp $(CPP_DIR)/main.cpp
 CPP_HDR := $(CPP_DIR)/TopologicalSortDFSBased.hpp
 BENCH_WRAPPER ?= $(REPO_ROOT)/scripts/benchmark_with_memory.sh
+BENCH_WITH_ALGO_TIME := sh -c 'exec "$$@" 2>&1' benchmark-with-algo-time
+TIME_FLAG := --time-topological-sort-dfs-based
 LOG_DIR := $(MAKEFILE_DIR)/logs
 CPP_BUILD_LOG := $(LOG_DIR)/build_cpp.log
 JAVA_BUILD_LOG := $(LOG_DIR)/build_java.log
@@ -73,37 +75,37 @@ benchmark_long: benchmark_long_cpp benchmark_long_py benchmark_long_java benchma
 
 benchmark_long_cpp: build_cpp
 	@printf '\n[Topological Sort, DFS-based][C++] %s\n' "$(LONG_INPUT)"
-	@$(BENCH_WRAPPER) $(BUILD_DIR)/$(TARGET) $(LONG_INPUT) --time-topological-sort-dfs-based
+	@$(BENCH_WRAPPER) $(BENCH_WITH_ALGO_TIME) $(BUILD_DIR)/$(TARGET) $(LONG_INPUT) $(TIME_FLAG)
 
 benchmark_long_py:
 	@printf '\n[Topological Sort, DFS-based][Python] %s\n' "$(LONG_INPUT)"
-	@$(BENCH_WRAPPER) $(PYTHON) $(PY_DIR)/main.py $(LONG_INPUT) --time-topological-sort-dfs-based
+	@$(BENCH_WRAPPER) $(BENCH_WITH_ALGO_TIME) $(PYTHON) $(PY_DIR)/main.py $(LONG_INPUT) $(TIME_FLAG)
 
 benchmark_long_java: build_java
 	@printf '\n[Topological Sort, DFS-based][Java] %s\n' "$(LONG_INPUT)"
-	@$(BENCH_WRAPPER) $(JAVA) -cp $(JAVA_DIR)/build Main $(LONG_INPUT) --time-topological-sort-dfs-based
+	@$(BENCH_WRAPPER) $(BENCH_WITH_ALGO_TIME) $(JAVA) -cp $(JAVA_DIR)/build Main $(LONG_INPUT) $(TIME_FLAG)
 
 benchmark_long_rs: build_rs
 	@printf '\n[Topological Sort, DFS-based][Rust] %s\n' "$(LONG_INPUT)"
-	@$(BENCH_WRAPPER) $(RUST_DIR)/target/release/topological-sort-dfs-based $(LONG_INPUT) --time-topological-sort-dfs-based
+	@$(BENCH_WRAPPER) $(BENCH_WITH_ALGO_TIME) $(RUST_DIR)/target/release/topological-sort-dfs-based $(LONG_INPUT) $(TIME_FLAG)
 
 benchmark_challenge: benchmark_challenge_cpp benchmark_challenge_py benchmark_challenge_java benchmark_challenge_rs
 
 benchmark_challenge_cpp: build_cpp
 	@printf '\n[Topological Sort, DFS-based][C++][challenge] %s\n' "$(CHALLENGE_INPUT)"
-	@$(BENCH_WRAPPER) $(BUILD_DIR)/$(TARGET) $(CHALLENGE_INPUT) --time-topological-sort-dfs-based
+	@$(BENCH_WRAPPER) $(BENCH_WITH_ALGO_TIME) $(BUILD_DIR)/$(TARGET) $(CHALLENGE_INPUT) $(TIME_FLAG)
 
 benchmark_challenge_py:
 	@printf '\n[Topological Sort, DFS-based][Python][challenge] %s\n' "$(CHALLENGE_INPUT)"
-	@$(BENCH_WRAPPER) $(PYTHON) $(PY_DIR)/main.py $(CHALLENGE_INPUT) --time-topological-sort-dfs-based
+	@$(BENCH_WRAPPER) $(BENCH_WITH_ALGO_TIME) $(PYTHON) $(PY_DIR)/main.py $(CHALLENGE_INPUT) $(TIME_FLAG)
 
 benchmark_challenge_java: build_java
 	@printf '\n[Topological Sort, DFS-based][Java][challenge] %s\n' "$(CHALLENGE_INPUT)"
-	@$(BENCH_WRAPPER) $(JAVA) -cp $(JAVA_DIR)/build Main $(CHALLENGE_INPUT) --time-topological-sort-dfs-based
+	@$(BENCH_WRAPPER) $(BENCH_WITH_ALGO_TIME) $(JAVA) -cp $(JAVA_DIR)/build Main $(CHALLENGE_INPUT) $(TIME_FLAG)
 
 benchmark_challenge_rs: build_rs
 	@printf '\n[Topological Sort, DFS-based][Rust][challenge] %s\n' "$(CHALLENGE_INPUT)"
-	@$(BENCH_WRAPPER) $(RUST_DIR)/target/release/topological-sort-dfs-based $(CHALLENGE_INPUT) --time-topological-sort-dfs-based
+	@$(BENCH_WRAPPER) $(BENCH_WITH_ALGO_TIME) $(RUST_DIR)/target/release/topological-sort-dfs-based $(CHALLENGE_INPUT) $(TIME_FLAG)
 
 clean:
 	@rm -rf $(BUILD_DIR) $(PY_DIR)/__pycache__ $(RUST_DIR)/target $(JAVA_DIR)/build $(LOG_DIR)

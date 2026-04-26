@@ -48,7 +48,7 @@ make benchmark_challenge
 ```
 
 ## Benchmark Scope
-The benchmark targets call each complete program through `scripts/benchmark_with_memory.sh`, so wrapper measurements include process startup, input parsing, adjacency-list construction, the DFS-based topological sort call, and output. When `--time-topological-sort-dfs-based` is passed, each program also writes an `algorithm_time_ns` line to standard error that measures only the core topological-sort function call, excluding parsing and printing.
+The benchmark targets call each complete program through `scripts/benchmark_with_memory.sh`, so wrapper measurements include process startup, input parsing, adjacency-list construction, the DFS-based topological sort call, and output. When `--time-topological-sort-dfs-based` is passed, each program also writes an `algorithm_time_ns` line that measures only the core topological-sort function call, excluding parsing and printing. The Makefile benchmark targets redirect that timing line from the program's standard error to standard output so it is visible during normal benchmark runs.
 
 ## Expected Small-Input Output
 ```text
