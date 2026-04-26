@@ -43,8 +43,15 @@ long long minimizeLargestGroupSum(const vector<long long>& values, int maxGroups
         throw invalid_argument("maxGroups must be positive");
     }
 
-    long long low = *max_element(values.begin(), values.end());
-    long long high = accumulate(values.begin(), values.end(), 0LL);
+    long long low = 0;
+    long long high = 0;
+    for (long long value : values) {
+        if (value < 0) {
+            throw invalid_argument("Binary Search on Answer partition baseline requires non-negative values");
+        }
+        low = max(low, value);
+        high += value;
+    }
 
     while (low < high) {
         long long mid = low + (high - low) / 2;
