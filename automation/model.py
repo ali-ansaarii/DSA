@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+from json import JSONDecodeError
 import os
 from pathlib import Path
 import socket
@@ -117,6 +118,7 @@ class ResponsesModelClient:
         reasoning_effort: str = "medium",
         max_output_tokens: int = 12000,
         request_timeout_seconds: int = 120,
+        malformed_response_retries: int = 2,
     ) -> None:
         self.api_key = api_key
         self.model = model
@@ -124,6 +126,7 @@ class ResponsesModelClient:
         self.reasoning_effort = reasoning_effort
         self.max_output_tokens = max_output_tokens
         self.request_timeout_seconds = request_timeout_seconds
+        self.malformed_response_retries = malformed_response_retries
 
     @classmethod
     def from_environment(cls, repo_root: Path) -> "ResponsesModelClient":
@@ -139,6 +142,9 @@ class ResponsesModelClient:
             max_output_tokens=int(os.environ.get("OPENAI_AUTOMATION_MAX_OUTPUT_TOKENS", "12000")),
             request_timeout_seconds=int(
                 os.environ.get("OPENAI_AUTOMATION_REQUEST_TIMEOUT_SECONDS", "120")
+            ),
+            malformed_response_retries=int(
+                os.environ.get("OPENAI_AUTOMATION_MALFORMED_RESPONSE_RETRIES", "2")
             ),
         )
 
@@ -246,12 +252,28 @@ class ResponsesModelClient:
             ],
             "tool_choice": "required",
         }
-        response = self._post_json(body)
-        return ModelCallResult(
-            prompt=prompt,
-            raw_response=response,
-            bundle=parse_file_bundle_from_response(response),
-        )
+        last_payload: dict[str, Any] | None = None
+        last_error: JSONDecodeError | None = None
+        total_attempts = self.malformed_response_retries + 1
+        for attempt in range(1, total_attempts + 1):
+            response = self._post_json(body)
+            last_payload = response
+            try:
+                bundle = parse_file_bundle_from_response(response)
+                return ModelCallResult(
+                    prompt=prompt,
+                    raw_response=response,
+                    bundle=bundle,
+                )
+            except JSONDecodeError as exc:
+                last_error = exc
+                if attempt == total_attempts:
+                    break
+        assert last_error is not None
+        raise RuntimeError(
+            "model returned malformed file-bundle JSON arguments after "
+            f"{total_attempts} attempts: {last_error}"
+        ) from last_error
 
     def _post_json(self, body: dict[str, Any]) -> dict[str, Any]:
         payload = json.dumps(body).encode("utf-8")

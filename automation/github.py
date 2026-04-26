@@ -12,7 +12,21 @@ from automation.shell import run_command
 
 
 BOT_LOGINS = {"chatgpt-codex-connector[bot]", "chatgpt-codex-connector"}
-CLEAN_REVIEW_RE = re.compile(r"didn['’]?t find any major issues", re.IGNORECASE)
+GENERIC_REVIEW_WRAPPER_RE = re.compile(
+    r"here are some automated review suggestions for this pull request",
+    re.IGNORECASE,
+)
+CLEAN_REVIEW_PATTERNS = [
+    re.compile(r"didn['’]?t find any major issues", re.IGNORECASE),
+    re.compile(r"no major issues found", re.IGNORECASE),
+    re.compile(r"no issues found", re.IGNORECASE),
+    re.compile(r"no major concerns", re.IGNORECASE),
+    re.compile(r"nothing major to flag", re.IGNORECASE),
+    re.compile(r"looks good(?: to me)?", re.IGNORECASE),
+    re.compile(r"\blgtm\b", re.IGNORECASE),
+]
+EYES_REACTION = "eyes"
+THUMBS_UP_REACTION = "+1"
 
 
 @dataclass(frozen=True)
@@ -30,6 +44,26 @@ class ReviewStatus:
     state: str
     actionable_comments: list[ReviewComment]
     latest_bot_comment: str | None
+
+
+@dataclass(frozen=True)
+class ReviewRequestComment:
+    comment_id: int
+    created_at: str | None
+
+
+@dataclass(frozen=True)
+class ReviewRequestReceipt:
+    state: str
+    seen_at: str | None = None
+
+
+def _bot_comment_is_clean(body: str | None) -> bool:
+    if not body:
+        return False
+    if GENERIC_REVIEW_WRAPPER_RE.search(body):
+        return False
+    return any(pattern.search(body) for pattern in CLEAN_REVIEW_PATTERNS)
 
 
 def _parse_timestamp(value: str | None) -> datetime | None:
@@ -91,6 +125,40 @@ def parse_remote_owner_repo(repo_root: Path) -> tuple[str, str]:
     return match.group("owner"), match.group("repo")
 
 
+def _api_request_json(
+    repo_root: Path,
+    *,
+    method: str,
+    path: str,
+    payload: dict | None = None,
+) -> dict:
+    token = get_review_token(repo_root)
+    owner, repo = parse_remote_owner_repo(repo_root)
+    full_path = path.format(owner=owner, repo=repo)
+    if token:
+        req = request.Request(
+            f"https://api.github.com{full_path}",
+            data=(json.dumps(payload).encode("utf-8") if payload is not None else None),
+            headers={
+                "Authorization": f"token {token}",
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28",
+                "User-Agent": "dsa-automation-github",
+                "Content-Type": "application/json",
+            },
+            method=method,
+        )
+        with request.urlopen(req, timeout=20) as response:
+            return json.loads(response.read().decode("utf-8"))
+
+    command = ["gh", "api", full_path, "--method", method]
+    if payload is not None:
+        for key, value in payload.items():
+            command.extend(["-f", f"{key}={value}"])
+    result = run_command(command, cwd=repo_root)
+    return json.loads(result.stdout)
+
+
 def create_pr(
     repo_root: Path,
     *,
@@ -124,34 +192,50 @@ def create_pr(
     return int(payload["number"]), payload["url"]
 
 
-def request_codex_review(repo_root: Path, pr_number: int) -> None:
-    token = get_review_token(repo_root)
-    if token:
-        owner, repo = parse_remote_owner_repo(repo_root)
-        payload = json.dumps({"body": "@codex review"}).encode("utf-8")
-        req = request.Request(
-            f"https://api.github.com/repos/{owner}/{repo}/issues/{pr_number}/comments",
-            data=payload,
-            headers={
-                "Authorization": f"token {token}",
-                "Accept": "application/vnd.github+json",
-                "X-GitHub-Api-Version": "2022-11-28",
-                "User-Agent": "dsa-automation-review-request",
-                "Content-Type": "application/json",
-            },
-            method="POST",
-        )
-        with request.urlopen(req, timeout=20) as response:
-            if response.status != 201:
-                raise RuntimeError(
-                    f"unexpected GitHub comment response status: {response.status}"
-                )
-        return
-
-    run_command(
-        ["gh", "pr", "comment", str(pr_number), "--body", "@codex review"],
-        cwd=repo_root,
+def request_codex_review(repo_root: Path, pr_number: int) -> ReviewRequestComment:
+    payload = _api_request_json(
+        repo_root,
+        method="POST",
+        path="/repos/{owner}/{repo}/issues/" + str(pr_number) + "/comments",
+        payload={"body": "@codex review"},
     )
+    return ReviewRequestComment(
+        comment_id=int(payload["id"]),
+        created_at=payload.get("created_at"),
+    )
+
+
+def fetch_review_request_receipt(
+    repo_root: Path,
+    *,
+    comment_id: int,
+) -> ReviewRequestReceipt:
+    payload = _api_request_json(
+        repo_root,
+        method="GET",
+        path="/repos/{owner}/{repo}/issues/comments/" + str(comment_id) + "/reactions",
+    )
+    reactions = payload if isinstance(payload, list) else []
+    latest_seen_at: str | None = None
+    saw_eyes = False
+    saw_thumbs_up = False
+    for reaction in reactions:
+        author = (reaction.get("user") or {}).get("login")
+        if author not in BOT_LOGINS:
+            continue
+        content = reaction.get("content")
+        created_at = reaction.get("created_at")
+        if created_at and (latest_seen_at is None or created_at > latest_seen_at):
+            latest_seen_at = created_at
+        if content == EYES_REACTION:
+            saw_eyes = True
+        elif content == THUMBS_UP_REACTION:
+            saw_thumbs_up = True
+    if saw_thumbs_up:
+        return ReviewRequestReceipt(state="clean", seen_at=latest_seen_at)
+    if saw_eyes:
+        return ReviewRequestReceipt(state="acknowledged", seen_at=latest_seen_at)
+    return ReviewRequestReceipt(state="waiting", seen_at=None)
 
 
 def merge_pr(repo_root: Path, pr_number: int, *, delete_branch: bool = True) -> None:
@@ -286,7 +370,7 @@ def parse_review_payload(payload: dict, *, not_before: str | None = None) -> Rev
             latest_bot_comment=latest_bot_comment,
         )
 
-    if latest_bot_comment and CLEAN_REVIEW_RE.search(latest_bot_comment):
+    if _bot_comment_is_clean(latest_bot_comment):
         return ReviewStatus(
             state="clean",
             actionable_comments=[],

@@ -278,8 +278,12 @@ class QueueRunner:
                 str(self.args.max_verification_fixes),
                 "--max-review-fixes",
                 str(self.args.max_review_fixes),
+                "--max-review-request-attempts",
+                str(self.args.max_review_request_attempts),
                 "--poll-interval-seconds",
                 str(self.args.poll_interval_seconds),
+                "--review-request-pickup-timeout-seconds",
+                str(self.args.review_request_pickup_timeout_seconds),
                 "--review-timeout-seconds",
                 str(self.args.review_timeout_seconds),
             ]
@@ -355,7 +359,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--stop-after", choices=sorted(state.ALLOWED_TRANSITIONS))
     parser.add_argument("--max-verification-fixes", type=int, default=3)
     parser.add_argument("--max-review-fixes", type=int, default=3)
+    parser.add_argument("--max-review-request-attempts", type=int, default=3)
     parser.add_argument("--poll-interval-seconds", type=int, default=120)
+    parser.add_argument("--review-request-pickup-timeout-seconds", type=int, default=90)
     parser.add_argument("--review-timeout-seconds", type=int, default=1800)
     return parser
 
